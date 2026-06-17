@@ -71,7 +71,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
 
       <footer className="mx-auto max-w-5xl px-4 py-10 text-center text-xs text-[var(--color-ink-soft)]">
-        תחרות ה‑RTM של ארבעים ושתיים · נבנה באהבה לסושיאל
+        תחרות ה‑RTM של 42 · נבנה באהבה לסושיאל
       </footer>
     </div>
   );

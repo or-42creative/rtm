@@ -1,23 +1,19 @@
 import { cn } from "./ui";
 
 /**
- * Brand wordmark: "Rבעים ושתיים TM".
- * A bilingual pun — "ארבעים ושתיים" (42) with the R and TM picked out so it
- * also spells RTM. Rendered dir="rtl" so the Hebrew/Latin mix stays in order
- * (R on the right, TM on the left). The accent spans carry no dir, so they
- * don't disturb the bidi ordering.
+ * Brand wordmark: "RTM ושתיים" (a play on ארבעים ושתיים = 42).
+ * dir="rtl" keeps the Latin/Hebrew mix in order — RTM on the right, ושתיים to
+ * its left. "RTM" is picked out in the accent (neon-pink) to match the logo.
  */
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span dir="rtl" className={cn("font-black tracking-tight", className)}>
-      <span className="text-[var(--color-accent)]">R</span>בעים ושתיים{" "}
-      <span className="text-[var(--color-accent)]">TM</span>
+      <span className="text-[var(--color-accent)]">RTM</span> ושתיים
     </span>
   );
 }
 
-/** 42 mark + wordmark. Placeholder square mark — swap for the official logo
- *  asset when it lands in the project. */
+/** The neon mark (cropped from the logo) + wordmark. */
 export function Logo({
   size = 36,
   withWordmark = true,
@@ -29,21 +25,13 @@ export function Logo({
 }) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <div
-        className="relative grid shrink-0 place-items-center rounded-xl bg-[var(--color-ink)] font-black text-white"
-        style={{ width: size, height: size, fontSize: size * 0.46 }}
-      >
-        42
-        <span
-          className="absolute rounded-full bg-[var(--color-accent)]"
-          style={{
-            width: size * 0.16,
-            height: size * 0.16,
-            insetInlineEnd: size * 0.12,
-            insetBlockEnd: size * 0.12,
-          }}
-        />
-      </div>
+      <img
+        src="/mark.png"
+        alt="RTM ושתיים"
+        width={size}
+        height={size}
+        className="shrink-0 rounded-xl object-cover"
+      />
       {withWordmark && <Wordmark className="text-lg" />}
     </div>
   );

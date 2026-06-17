@@ -12,7 +12,7 @@ export function RulesPage() {
       {/* Hero */}
       <div className="animate-fade-up rounded-3xl bg-gradient-to-l from-[var(--c-purple)] via-[var(--c-pink)] to-[var(--c-orange)] p-8 text-white shadow-lg">
         <p className="text-sm font-black text-white/90">תקנון רשמי 📜</p>
-        <h1 className="mt-1 text-4xl font-black">תחרות ה‑RTM של ארבעים ושתיים</h1>
+        <h1 className="mt-1 text-4xl font-black">תחרות ה‑RTM של 42</h1>
         <p className="mt-2 max-w-xl font-medium text-white/90">
           כאן עושים סושיאל — ומי שתופס את הרגע בזמן אמת, מקבל נקודות. זה התקנון
           הקצר והברור של התחרות החודשית.
@@ -72,7 +72,7 @@ export function RulesPage() {
       </Rule>
 
       <p className="pb-4 text-center text-xs text-[var(--color-ink-soft)]">
-        התקנון עשוי להתעדכן. גרסה ראשונה · תחרות ה‑RTM של ארבעים ושתיים.
+        התקנון עשוי להתעדכן. גרסה ראשונה · תחרות ה‑RTM של 42.
       </p>
     </div>
   );

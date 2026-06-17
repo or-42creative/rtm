@@ -1,7 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import { allowedDomains } from "@/lib/firebase";
 import { Button, Card, FullScreen } from "@/components/ui";
-import { Logo, Wordmark } from "@/components/Logo";
 
 function GoogleMark() {
   return (
@@ -19,16 +18,12 @@ export function LoginPage() {
   return (
     <FullScreen>
       <Card className="w-full max-w-md text-center">
-        <div className="flex justify-center">
-          <Logo size={56} withWordmark={false} />
-        </div>
-        <h1 className="mt-6 leading-tight">
-          <Wordmark className="text-4xl" />
-        </h1>
-        <p className="mt-2 text-base font-bold text-[var(--color-ink)]">
-          תחרות ה‑RTM של ארבעים ושתיים
-        </p>
-        <p className="mt-3 text-sm text-[var(--color-ink-soft)]">
+        <img
+          src="/logo.jpg"
+          alt="RTM ושתיים — תחרות ה-RTM של 42"
+          className="mx-auto w-full max-w-[280px] rounded-3xl shadow-lg"
+        />
+        <p className="mt-5 text-sm text-[var(--color-ink-soft)]">
           מי מביא הכי הרבה רגעים בזמן אמת? התחברו, העלו את ה‑RTMים שלכם וצברו
           נקודות.
         </p>

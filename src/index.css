@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Heebo", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+
+  /* Brand palette — black / white / charcoal with a bold accent.
+     Tweak --color-accent once we have 42's exact brand hex + logo. */
+  --color-ink: #0e0e10;
+  --color-ink-soft: #52525b;
+  --color-paper: #ffffff;
+  --color-cloud: #f4f4f5;
+  --color-line: #e4e4e7;
+  --color-accent: #ff3b2f;
+  --color-accent-soft: #ffe7e4;
+  --color-gold: #f4c430;
+
+  /* Playful palette for tiles, charts, badges. */
+  --c-pink: #ff4d8d;
+  --c-purple: #8b5cf6;
+  --c-blue: #3b82f6;
+  --c-teal: #06b6d4;
+  --c-lime: #84cc16;
+  --c-orange: #fb923c;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-cloud);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ------------------------------- animations -------------------------------- */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes growBar {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes heartBurst {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.45);
+  }
+  60% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.5s cubic-bezier(0.21, 1.02, 0.73, 1) both;
+}
+
+.animate-pop {
+  animation: popIn 0.45s cubic-bezier(0.21, 1.02, 0.73, 1) both;
+}
+
+.animate-float {
+  animation: floaty 3s ease-in-out infinite;
+}
+
+.heart-burst {
+  animation: heartBurst 0.45s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-pop,
+  .animate-float,
+  .heart-burst {
+    animation: none;
+  }
+}

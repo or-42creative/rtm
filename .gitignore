@@ -1,0 +1,28 @@
+node_modules
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+
+# Firebase
+.firebase
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+# Service-account / Admin SDK private keys — NEVER commit these.
+*-service-account*.json
+*firebase-adminsdk*.json
+*.serviceaccount.json
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Source data the user dropped in (kept local, not committed — already encoded in src/data/seed.ts)
+*.xlsx
+רשימת עובדים.txt

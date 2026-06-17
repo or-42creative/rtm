@@ -1,0 +1,96 @@
+rules_version = '2';
+
+// Security rules for the 42 RTM app.
+//
+// ⚠️ TWO THINGS TO EDIT BEFORE DEPLOYING:
+//   1. officeDomain() — set it to your office email domain.
+//   2. bootstrapAdmins() — put the first admin's email here (lower-case). It
+//      must match VITE_BOOTSTRAP_ADMIN_EMAILS in your .env, otherwise that
+//      account won't be allowed to create itself as an admin.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function emailLower() {
+      return request.auth.token.email.lower();
+    }
+
+    // Edit to your domain. (Escaped dots for the regex.)
+    function isOffice() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && emailLower().matches('.*@42creative[.]co[.]il$');
+    }
+
+    // Keep in sync with VITE_BOOTSTRAP_ADMIN_EMAILS (lower-case).
+    // ⚠️ Replace with YOUR exact Google login email if it's different.
+    function bootstrapAdmins() {
+      return ['or@42creative.co.il'];
+    }
+
+    function isBootstrapAdmin() {
+      return isOffice() && emailLower() in bootstrapAdmins();
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isOffice()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc().role == 'admin';
+    }
+
+    match /employees/{id} {
+      allow read: if isOffice();
+      allow write: if isAdmin();
+    }
+
+    match /clients/{id} {
+      allow read: if isOffice();
+      allow write: if isAdmin();
+    }
+
+    match /rtms/{id} {
+      allow read: if isOffice();
+      // Anyone in the office can post an RTM, but only stamped as themselves.
+      allow create: if isOffice()
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.ideaOwnerIds is list
+        && request.resource.data.ideaOwnerIds.size() >= 1
+        && request.resource.data.ideaOwnerIds.size() <= 2;
+      // Admins can edit anything. Anyone in the office may toggle ONLY their
+      // own ❤️ reaction (no other field, and only their own key in the map).
+      allow update: if isAdmin()
+        || (isOffice()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+            && request.resource.data.get('reactions', {})
+                 .diff(resource.data.get('reactions', {}))
+                 .affectedKeys().hasOnly([request.auth.uid]));
+      // Admins can remove any RTM; a member may delete one they created.
+      allow delete: if isAdmin()
+        || (isOffice() && resource.data.createdByUid == request.auth.uid);
+    }
+
+    match /users/{uid} {
+      allow read: if isOffice() && (request.auth.uid == uid || isAdmin());
+      // First login creates your own doc. You can only mark yourself admin if
+      // you're a bootstrap admin; everyone else must be a plain member.
+      allow create: if isOffice() && request.auth.uid == uid
+        && (request.resource.data.role == 'member'
+            || (request.resource.data.role == 'admin' && isBootstrapAdmin()));
+      // Admins can change anything. A member may update their own doc but may
+      // NOT change their own role (no self-promotion).
+      allow update: if isAdmin()
+        || (isOffice() && request.auth.uid == uid
+            && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    match /settings/{doc} {
+      allow read: if isOffice();
+      allow write: if isAdmin();
+    }
+  }
+}

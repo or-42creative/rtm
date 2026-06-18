@@ -30,10 +30,19 @@ import {
   SectionTitle,
   cn,
   inputClass,
+  selectInline,
 } from "@/components/ui";
 import { RtmCard } from "@/components/RtmCard";
+import { DEFAULT_STRINGS, STRING_GROUPS } from "@/data/strings";
 
-type Tab = "users" | "employees" | "clients" | "rtms" | "content" | "settings";
+type Tab =
+  | "users"
+  | "employees"
+  | "clients"
+  | "rtms"
+  | "content"
+  | "strings"
+  | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "users", label: "משתמשים" },
@@ -41,6 +50,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "clients", label: "לקוחות" },
   { id: "rtms", label: "RTMים" },
   { id: "content", label: "תוכן" },
+  { id: "strings", label: "טקסטים" },
   { id: "settings", label: "הגדרות" },
 ];
 
@@ -72,6 +82,7 @@ export function AdminPage() {
         {tab === "clients" && <ClientsTab />}
         {tab === "rtms" && <RtmsTab />}
         {tab === "content" && <ContentTab />}
+        {tab === "strings" && <StringsTab />}
         {tab === "settings" && <SettingsTab />}
       </div>
     </div>
@@ -165,51 +176,55 @@ function UsersTab() {
             const isSelf = u.uid === appUser?.uid;
             return (
               <Row key={u.uid}>
-                <div className="me-auto min-w-0">
-                  <div className="font-bold">
-                    {u.employeeId ? employeeName(u.employeeId) : u.displayName}
+                <div className="min-w-0 flex-1 basis-48">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <span className="truncate">
+                      {u.employeeId ? employeeName(u.employeeId) : u.displayName}
+                    </span>
                     {u.role === "admin" && <Badge tone="accent">אדמין</Badge>}
-                    {isSelf && <span className="ms-1 text-xs text-[var(--color-ink-soft)]">(את/ה)</span>}
+                    {isSelf && <span className="text-xs text-[var(--color-ink-soft)]">(את/ה)</span>}
                   </div>
-                  <div className="text-xs text-[var(--color-ink-soft)]" dir="ltr">
+                  <div className="truncate text-xs text-[var(--color-ink-soft)]" dir="ltr">
                     {u.email}
                   </div>
                 </div>
 
-                <select
-                  className={cn(inputClass, "h-9 w-40 py-1")}
-                  value={u.employeeId ?? ""}
-                  onChange={(e) => void setUserEmployee(u.uid, e.target.value || null)}
-                >
-                  <option value="">— לא משויך —</option>
-                  {employees.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    className={cn(selectInline, "w-44")}
+                    value={u.employeeId ?? ""}
+                    onChange={(e) => void setUserEmployee(u.uid, e.target.value || null)}
+                  >
+                    <option value="">— לא משויך —</option>
+                    {employees.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.name}
+                      </option>
+                    ))}
+                  </select>
 
-                <Button
-                  variant="outline"
-                  className="px-3 py-1.5 text-xs"
-                  disabled={isSelf}
-                  onClick={() =>
-                    void setUserRole(u.uid, u.role === "admin" ? "member" : "admin")
-                  }
-                >
-                  {u.role === "admin" ? "הסר אדמין" : "הפוך לאדמין"}
-                </Button>
+                  <Button
+                    variant="outline"
+                    className="px-3 py-1.5 text-xs"
+                    disabled={isSelf}
+                    onClick={() =>
+                      void setUserRole(u.uid, u.role === "admin" ? "member" : "admin")
+                    }
+                  >
+                    {u.role === "admin" ? "הסר אדמין" : "הפוך לאדמין"}
+                  </Button>
 
-                <Button
-                  variant="danger"
-                  className="px-3 py-1.5 text-xs"
-                  disabled={isSelf}
-                  onClick={() => {
-                    if (confirm(`להסיר את ${u.email}?`)) void deleteUser(u.uid);
-                  }}
-                >
-                  הסרה
-                </Button>
+                  <Button
+                    variant="danger"
+                    className="px-3 py-1.5 text-xs"
+                    disabled={isSelf}
+                    onClick={() => {
+                      if (confirm(`להסיר את ${u.email}?`)) void deleteUser(u.uid);
+                    }}
+                  >
+                    הסרה
+                  </Button>
+                </div>
               </Row>
             );
           })
@@ -355,7 +370,7 @@ function ClientsTab() {
           <label className="flex items-center gap-1.5 text-xs text-[var(--color-ink-soft)]">
             מנהל/ת:
             <select
-              className={cn(inputClass, "h-9 w-40 py-1")}
+              className={cn(selectInline, "w-40")}
               value={c.accountManagerId}
               onChange={(e) => void updateClient(c.id, { accountManagerId: e.target.value })}
             >
@@ -435,7 +450,7 @@ function ContentTab() {
   const save = async () => {
     await saveSettings({
       ...settings,
-      content: { monthlyPrize: prize, announcement, rules },
+      content: { ...settings.content, monthlyPrize: prize, announcement, rules },
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -488,6 +503,97 @@ function ContentTab() {
         {saved && <span className="text-sm font-bold text-green-600">נשמר ✓</span>}
       </div>
     </Card>
+  );
+}
+
+/* ---------------------------------- strings ---------------------------------- */
+
+function StringsTab() {
+  const { settings } = useAppData();
+  const [vals, setVals] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const o = settings.content.strings ?? {};
+    const next: Record<string, string> = {};
+    for (const g of STRING_GROUPS) {
+      for (const f of g.fields) next[f.key] = o[f.key] ?? DEFAULT_STRINGS[f.key] ?? "";
+    }
+    setVals(next);
+  }, [settings]);
+
+  const set = (k: string, v: string) => setVals((p) => ({ ...p, [k]: v }));
+
+  const save = async () => {
+    const overrides: Record<string, string> = {};
+    for (const k of Object.keys(vals)) {
+      if (vals[k] !== (DEFAULT_STRINGS[k] ?? "")) overrides[k] = vals[k];
+    }
+    await saveSettings({
+      ...settings,
+      content: { ...settings.content, strings: overrides },
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const resetAll = async () => {
+    if (!confirm("לאפס את כל הטקסטים חזרה לברירת המחדל?")) return;
+    await saveSettings({
+      ...settings,
+      content: { ...settings.content, strings: {} },
+    });
+  };
+
+  return (
+    <div className="space-y-5">
+      <Card className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <SectionTitle>טקסטים ומיקרוקופי</SectionTitle>
+          <p className="text-sm text-[var(--color-ink-soft)]">
+            ערכו כל טקסט בממשק. שדה ריק = ברירת המחדל. אפשר להשתמש ב‑
+            <code className="rounded bg-[var(--color-cloud)] px-1">{"{month}"}</code> /{" "}
+            <code className="rounded bg-[var(--color-cloud)] px-1">{"{name}"}</code> /{" "}
+            <code className="rounded bg-[var(--color-cloud)] px-1">{"{email}"}</code> במקומות הרלוונטיים.
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {saved && <span className="text-sm font-bold text-green-600">נשמר ✓</span>}
+          <Button variant="ghost" onClick={() => void resetAll()}>איפוס הכל</Button>
+          <Button onClick={() => void save()}>שמירת טקסטים</Button>
+        </div>
+      </Card>
+
+      {STRING_GROUPS.map((g) => (
+        <Card key={g.title}>
+          <SectionTitle>{g.title}</SectionTitle>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {g.fields.map((f) => (
+              <Field key={f.key} label={f.label}>
+                {f.area ? (
+                  <textarea
+                    className={cn(inputClass, "min-h-20")}
+                    value={vals[f.key] ?? ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                  />
+                ) : (
+                  <input
+                    className={inputClass}
+                    value={vals[f.key] ?? ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                  />
+                )}
+              </Field>
+            ))}
+          </div>
+        </Card>
+      ))}
+
+      <div className="flex items-center gap-3">
+        <Button onClick={() => void save()}>שמירת טקסטים</Button>
+        {saved && <span className="text-sm font-bold text-green-600">נשמר ✓</span>}
+      </div>
+    </div>
   );
 }
 

@@ -163,6 +163,10 @@ export function EmptyState({
 export const inputClass =
   "w-full rounded-xl border border-[var(--color-line)] bg-white px-3.5 py-2.5 text-sm font-medium outline-none transition focus:border-[var(--color-ink)] focus:ring-2 focus:ring-[var(--color-ink)]/10 disabled:bg-[var(--color-cloud)]";
 
+/** Compact inline select for admin rows — no `w-full`, so a width class sticks. */
+export const selectInline =
+  "h-9 rounded-xl border border-[var(--color-line)] bg-white px-2.5 text-sm font-bold outline-none transition focus:border-[var(--color-ink)]";
+
 export function Field({
   label,
   hint,

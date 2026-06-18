@@ -8,7 +8,7 @@ import { Logo } from "@/components/Logo";
 
 export function LinkEmployeePage() {
   const { firebaseUser, appUser, signOut } = useAuth();
-  const { activeEmployees, loading } = useAppData();
+  const { activeEmployees, loading, t } = useAppData();
   const [selected, setSelected] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -40,10 +40,9 @@ export function LinkEmployeePage() {
     <FullScreen>
       <Card className="w-full max-w-lg">
         <Logo size={36} />
-        <h1 className="mt-5 text-2xl font-black">מי את/ה?</h1>
+        <h1 className="mt-5 text-2xl font-black">{t("link.title")}</h1>
         <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-          חיברת את החשבון {firebaseUser?.email}. בחר/י את השם שלך מהרשימה כדי
-          שנדע למי לשייך את ה‑RTMים והנקודות.
+          {t("link.intro", { email: firebaseUser?.email ?? "" })}
         </p>
 
         {loading ? (
@@ -92,17 +91,17 @@ export function LinkEmployeePage() {
         <div className="mt-6 flex flex-wrap items-center gap-2">
           {!empty && !loading && (
             <Button onClick={() => void confirm()} disabled={!selected || saving}>
-              {saving ? "שומר…" : "זה אני"}
+              {saving ? "שומר…" : t("link.confirm")}
             </Button>
           )}
           <Button variant="ghost" onClick={() => void signOut()}>
-            התחברות עם חשבון אחר
+            {t("link.other")}
           </Button>
         </div>
 
         {!empty && (
           <p className="mt-4 text-xs text-[var(--color-ink-soft)]">
-            לא מוצא/ת את עצמך? פנה/י למנהל המערכת שיוסיף אותך לרשימת העובדים.
+            {t("link.notFound")}
           </p>
         )}
       </Card>

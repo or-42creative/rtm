@@ -10,7 +10,7 @@ import { RtmCard } from "@/components/RtmCard";
 
 export function MyRtmsPage() {
   const { appUser } = useAuth();
-  const { rtms, clients } = useAppData();
+  const { rtms, clients, t } = useAppData();
   const myId = appUser?.employeeId ?? "";
 
   const { mine, byMonth, thisMonthCount, amThisMonth, isAM } = useMemo(() => {
@@ -37,22 +37,22 @@ export function MyRtmsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black">ה‑RTMים שלי</h1>
+      <h1 className="text-2xl font-black">{t("my.title")}</h1>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <Stat label={`רעיונות החודש (${monthLabel(currentMonthKey())})`} value={thisMonthCount} />
-        <Stat label="סה״כ רעיונות" value={mine.length} />
-        {isAM && <Stat label="RTM ללקוחות שלי החודש" value={amThisMonth} tone="gold" />}
+        <Stat label={`${t("my.statMonth")} (${monthLabel(currentMonthKey())})`} value={thisMonthCount} />
+        <Stat label={t("my.statTotal")} value={mine.length} />
+        {isAM && <Stat label={t("my.statAm")} value={amThisMonth} tone="gold" />}
       </div>
 
       <div className="mt-8">
         {byMonth.length === 0 ? (
           <EmptyState
-            title="עוד לא העלית RTM 😴"
-            hint="ברגע שתעלה/י RTM ותסמן/י שהרעיון שלך — הוא יופיע כאן ותתחיל/י לצבור נקודות."
+            title={t("my.emptyTitle")}
+            hint={t("my.emptyHint")}
             action={
               <Link to="/submit">
-                <Button>להעלות RTM ראשון</Button>
+                <Button>{t("my.emptyCta")}</Button>
               </Link>
             }
           />

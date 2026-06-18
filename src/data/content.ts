@@ -35,4 +35,5 @@ export const DEFAULT_CONTENT: AppContent = {
   monthlyPrize: "",
   announcement: "",
   rules: "",
+  strings: {},
 };

@@ -20,7 +20,7 @@ const countLikes = (reactions?: Record<string, boolean>) =>
   reactions ? Object.keys(reactions).length : 0;
 
 export function DashboardPage() {
-  const { rtms, employees, clients, settings, loading } = useAppData();
+  const { rtms, employees, clients, settings, t, loading } = useAppData();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
 
   const scores = useMemo(
@@ -79,7 +79,7 @@ export function DashboardPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="animate-fade-up">
-          <p className="text-sm font-black text-[var(--color-accent)]">דאשבורד · תחרות ה‑RTM</p>
+          <p className="text-sm font-black text-[var(--color-accent)]">{t("dash.kicker")}</p>
           <h1 className="text-4xl font-black tracking-tight">{monthLabel(monthKey)}</h1>
         </div>
         <MonthNav monthKey={monthKey} onChange={setMonthKey} canGoNext={!isCurrent} />
@@ -92,54 +92,41 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* 1 — Winners */}
-      <section>
-        <SectionTitle>🏆 הזוכים של {monthLabel(prevMonthKey(monthKey))}</SectionTitle>
-        {prev.rtmCount === 0 ? (
-          <EmptyState title="אין עדיין זוכים לחודש הקודם" />
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <WinnerCard title="מלך/ת הרעיונות 👑" subtitle="הכי הרבה נקודות רעיון" row={prev.winners.topIdea} />
-            <WinnerCard title="מנהל/ת הלקוח של החודש ⭐" subtitle="הכי הרבה RTM ללקוחות" row={prev.winners.topAccountManager} />
-          </div>
-        )}
-      </section>
-
-      {/* 1b — Prize + top client */}
+      {/* Prize + top client */}
       <div className="grid gap-3 sm:grid-cols-2">
         <Card className="flex items-center gap-4 border-[var(--color-gold)]/50 bg-gradient-to-l from-[var(--color-gold)]/15 to-transparent">
           <span className="text-4xl animate-float">🎁</span>
           <div className="min-w-0">
-            <p className="text-xs font-black text-[#9a7b00]">הפרס של החודש</p>
-            <p className="text-lg font-black">{prize || "ייקבע בקרוב ✨"}</p>
+            <p className="text-xs font-black text-[#9a7b00]">{t("dash.prizeLabel")}</p>
+            <p className="text-lg font-black">{prize || t("dash.prizeEmpty")}</p>
           </div>
         </Card>
         <Card className="flex items-center gap-4">
           <span className="text-4xl">🏅</span>
           <div className="min-w-0">
-            <p className="text-xs font-black text-[var(--color-ink-soft)]">הלקוח המוביל</p>
+            <p className="text-xs font-black text-[var(--color-ink-soft)]">{t("dash.topClient")}</p>
             <p className="truncate text-lg font-black">{scores.topClient ? scores.topClient.name : "—"}</p>
             {scores.topClient && <Badge tone="accent">{scores.topClient.count} RTM</Badge>}
           </div>
         </Card>
       </div>
 
-      {/* 1c — Current standings */}
+      {/* Current standings */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Leaderboard title="💡 מביאי הרעיונות" unit="נק׳" rows={scores.ideaScores} />
-        <Leaderboard title="🎯 מנהלי לקוח מובילים" unit="RTM" rows={scores.amScores} />
+        <Leaderboard title={t("dash.ideaBoard")} unit="נק׳" rows={scores.ideaScores} empty={t("dash.boardEmpty")} />
+        <Leaderboard title={t("dash.amBoard")} unit="RTM" rows={scores.amScores} empty={t("dash.boardEmpty")} />
       </div>
 
-      {/* 2 — Collage */}
+      {/* Collage */}
       <section>
-        <SectionTitle hint={`${monthRtms.length} פוסטים`}>🎬 הקיר של ה‑RTMים</SectionTitle>
+        <SectionTitle hint={`${monthRtms.length} פוסטים`}>{t("dash.collage")}</SectionTitle>
         {monthRtms.length === 0 ? (
           <EmptyState
-            title="הקיר עוד ריק 🎨"
-            hint="ברגע שיעלו RTMים החודש הם יופיעו כאן בקולאז׳ צבעוני. רוצים להיות הראשונים?"
+            title={t("dash.collageEmptyTitle")}
+            hint={t("dash.collageEmptyHint")}
             action={
               <Link to="/submit">
-                <Button>להעלות RTM</Button>
+                <Button>{t("dash.collageCta")}</Button>
               </Link>
             }
           />
@@ -148,20 +135,18 @@ export function DashboardPage() {
         )}
       </section>
 
-      {/* 3 — Pace by day */}
+      {/* Pace by day */}
       <Card>
-        <SectionTitle hint={`${scores.rtmCount} החודש`}>📈 קצב החודש — לפי ימים</SectionTitle>
+        <SectionTitle hint={`${scores.rtmCount} החודש`}>{t("dash.pace")}</SectionTitle>
         <BarChart data={daily} />
       </Card>
 
-      {/* 4 — Likes + previous months */}
+      {/* Likes + previous months */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <SectionTitle hint={`${totalLikes} לייקים`}>❤️ הכי אהובים החודש</SectionTitle>
+          <SectionTitle hint={`${totalLikes} לייקים`}>{t("dash.loved")}</SectionTitle>
           {loved.length === 0 ? (
-            <p className="py-6 text-center text-sm text-[var(--color-ink-soft)]">
-              עדיין אין לייקים החודש. תהיו הראשונים לפרגן!
-            </p>
+            <p className="py-6 text-center text-sm text-[var(--color-ink-soft)]">{t("dash.lovedEmpty")}</p>
           ) : (
             <ol className="space-y-1">
               {loved.map((r, i) => (
@@ -171,10 +156,23 @@ export function DashboardPage() {
           )}
         </Card>
         <Card>
-          <SectionTitle>📅 חודשים קודמים</SectionTitle>
+          <SectionTitle>{t("dash.prevMonths")}</SectionTitle>
           <BarChart data={months} />
         </Card>
       </div>
+
+      {/* Winners (bottom) */}
+      <section>
+        <SectionTitle>{t("dash.winnersTitle", { month: monthLabel(prevMonthKey(monthKey)) })}</SectionTitle>
+        {prev.rtmCount === 0 ? (
+          <EmptyState title={t("dash.winnersEmpty")} />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <WinnerCard title={t("dash.winnerIdea")} subtitle={t("dash.winnerIdeaSub")} row={prev.winners.topIdea} />
+            <WinnerCard title={t("dash.winnerAm")} subtitle={t("dash.winnerAmSub")} row={prev.winners.topAccountManager} />
+          </div>
+        )}
+      </section>
     </div>
   );
 }
@@ -262,19 +260,19 @@ function Leaderboard({
   title,
   unit,
   rows,
+  empty,
 }: {
   title: string;
   unit: string;
   rows: ScoreRow[];
+  empty: string;
 }) {
   const medals = ["🥇", "🥈", "🥉"];
   return (
     <Card>
       <SectionTitle>{title}</SectionTitle>
       {rows.length === 0 ? (
-        <p className="py-6 text-center text-sm text-[var(--color-ink-soft)]">
-          אין עדיין נתונים לחודש הזה.
-        </p>
+        <p className="py-6 text-center text-sm text-[var(--color-ink-soft)]">{empty}</p>
       ) : (
         <ol className="space-y-1">
           {rows.map((r, i) => (

@@ -15,12 +15,15 @@ import {
   subscribeSettings,
 } from "./db";
 import type { AppSettings, Client, Employee, Rtm } from "@/types";
+import { DEFAULT_STRINGS } from "@/data/strings";
 
 interface AppDataValue {
   employees: Employee[];
   clients: Client[];
   rtms: Rtm[];
   settings: AppSettings;
+  /** Look up a UI string by key (admin-overridable), with {token} interpolation. */
+  t: (key: string, vars?: Record<string, string | number>) => string;
   loading: boolean;
   /** id → employee name, "—" when missing. */
   employeeName: (id: string | null | undefined) => string;
@@ -83,11 +86,22 @@ export function AppDataProvider({
   const value = useMemo<AppDataValue>(() => {
     const names = new Map(employees.map((e) => [e.id, e.name] as const));
     const amIds = new Set(clients.map((c) => c.accountManagerId));
+    const overrides = settings.content.strings ?? {};
+    const t = (key: string, vars?: Record<string, string | number>) => {
+      let s = overrides[key] ?? DEFAULT_STRINGS[key] ?? key;
+      if (vars) {
+        for (const [k, v] of Object.entries(vars)) {
+          s = s.replaceAll(`{${k}}`, String(v));
+        }
+      }
+      return s;
+    };
     return {
       employees,
       clients,
       rtms,
       settings,
+      t,
       loading: !(ready.e && ready.c && ready.r),
       employeeName: (id) => (id ? (names.get(id) ?? "—") : "—"),
       accountManagers: employees.filter((e) => amIds.has(e.id)),

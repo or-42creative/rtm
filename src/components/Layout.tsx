@@ -17,7 +17,7 @@ function navClass({ isActive }: { isActive: boolean }) {
 
 export function Layout({ children }: { children: ReactNode }) {
   const { appUser, signOut } = useAuth();
-  const { employeeName } = useAppData();
+  const { employeeName, t } = useAppData();
   const isAdmin = appUser?.role === "admin";
   const myName = appUser?.employeeId
     ? employeeName(appUser.employeeId)
@@ -33,20 +33,20 @@ export function Layout({ children }: { children: ReactNode }) {
 
           <nav className="order-3 flex w-full items-center gap-1 overflow-x-auto sm:order-2 sm:w-auto">
             <NavLink to="/" end className={navClass}>
-              דאשבורד
+              {t("nav.dashboard")}
             </NavLink>
             <NavLink to="/submit" className={navClass}>
-              הוספת RTM
+              {t("nav.submit")}
             </NavLink>
             <NavLink to="/me" className={navClass}>
-              ה‑RTMים שלי
+              {t("nav.myRtms")}
             </NavLink>
             <NavLink to="/rules" className={navClass}>
-              תקנון
+              {t("nav.rules")}
             </NavLink>
             {isAdmin && (
               <NavLink to="/admin" className={navClass}>
-                ניהול
+                {t("nav.admin")}
               </NavLink>
             )}
           </nav>
@@ -56,13 +56,13 @@ export function Layout({ children }: { children: ReactNode }) {
               <div className="text-sm font-bold leading-tight">{myName}</div>
               {isAdmin && (
                 <div className="text-[11px] font-bold text-[var(--color-accent)]">
-                  אדמין
+                  {t("nav.adminBadge")}
                 </div>
               )}
             </div>
             <Avatar name={myName} src={appUser?.photoURL} />
             <Button variant="ghost" onClick={() => void signOut()} className="px-2">
-              יציאה
+              {t("nav.signOut")}
             </Button>
           </div>
         </div>
@@ -71,7 +71,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
 
       <footer className="mx-auto max-w-5xl px-4 py-10 text-center text-xs text-[var(--color-ink-soft)]">
-        תחרות ה‑RTM של 42 · נבנה באהבה לסושיאל
+        {t("nav.footer")}
       </footer>
     </div>
   );

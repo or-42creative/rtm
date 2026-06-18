@@ -23,7 +23,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export function SubmitRtmPage() {
   const navigate = useNavigate();
   const { appUser } = useAuth();
-  const { activeClients, activeEmployees, employeeName } = useAppData();
+  const { activeClients, activeEmployees, employeeName, t } = useAppData();
 
   const [name, setName] = useState("");
   const [clientId, setClientId] = useState("");
@@ -81,7 +81,7 @@ export function SubmitRtmPage() {
       navigate("/me");
     } catch (e) {
       console.error(e);
-      setError("שמירת ה‑RTM נכשלה. בדקו את החיבור ונסו שוב.");
+      setError(t("submit.error"));
       setSaving(false);
     }
   };
@@ -90,29 +90,27 @@ export function SubmitRtmPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-black">הוספת RTM</h1>
-      <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-        כל RTM מזכה את בעלי הרעיון ואת מנהל/ת הלקוח בנקודה. מלאו את הפרטים 👇
-      </p>
+      <h1 className="text-2xl font-black">{t("submit.heading")}</h1>
+      <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{t("submit.intro")}</p>
 
       <Card className="mt-5 space-y-5">
-        <Field label="שם ה‑RTM" required>
+        <Field label={t("submit.name")} required>
           <input
             className={inputClass}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="במה מדובר?"
+            placeholder={t("submit.namePh")}
           />
         </Field>
 
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="לקוח" required>
+          <Field label={t("submit.client")} required>
             <select
               className={inputClass}
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
             >
-              <option value="">בחרו לקוח…</option>
+              <option value="">{t("submit.clientPh")}</option>
               {activeClients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -121,7 +119,7 @@ export function SubmitRtmPage() {
             </select>
           </Field>
 
-          <Field label="תאריך" required hint="ברירת המחדל היא היום — אפשר לשנות.">
+          <Field label={t("submit.date")} required hint={t("submit.dateHint")}>
             <input
               type="date"
               className={inputClass}
@@ -134,16 +132,11 @@ export function SubmitRtmPage() {
 
         {client && (
           <p className="-mt-2 text-xs text-[var(--color-ink-soft)]">
-            מנהל/ת הלקוח: <b>{employeeName(client.accountManagerId)}</b> — תקבל/י
-            נקודה אוטומטית על ה‑RTM הזה.
+            {t("submit.amNote", { name: employeeName(client.accountManagerId) })}
           </p>
         )}
 
-        <Field
-          label="של מי הרעיון?"
-          required
-          hint="אפשר לבחור עד 2 אנשים. כל אחד מהם מקבל נקודה."
-        >
+        <Field label={t("submit.idea")} required hint={t("submit.ideaHint")}>
           <div className="space-y-2">
             {ideaOwnerIds.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -172,7 +165,7 @@ export function SubmitRtmPage() {
                 onChange={(e) => addOwner(e.target.value)}
               >
                 <option value="">
-                  {ideaOwnerIds.length === 0 ? "בחרו בעל/ת רעיון…" : "להוסיף עוד אחד…"}
+                  {ideaOwnerIds.length === 0 ? t("submit.ideaPh") : t("submit.ideaPhMore")}
                 </option>
                 {ownerOptions.map((e) => (
                   <option key={e.id} value={e.id}>
@@ -184,11 +177,7 @@ export function SubmitRtmPage() {
           </div>
         </Field>
 
-        <Field
-          label="לינק ל‑RTM בסושיאל"
-          required
-          hint="אינסטגרם / טיקטוק / פייסבוק / יוטיוב / X — נציג תצוגה מקדימה אוטומטית."
-        >
+        <Field label={t("submit.link")} required hint={t("submit.linkHint")}>
           <input
             className={inputClass}
             value={link}
@@ -199,12 +188,8 @@ export function SubmitRtmPage() {
         </Field>
 
         <Field
-          label="תמונה (אופציונלי)"
-          hint={
-            social?.iframeSrc
-              ? "זוהתה תצוגה מהלינק. אפשר גם להעלות תמונה שתבלוט בקולאז׳."
-              : "מומלץ להעלות תמונה שתופיע יפה בקולאז׳. וידאו מוצג אוטומטית מהלינק לסושיאל."
-          }
+          label={t("submit.media")}
+          hint={social?.iframeSrc ? t("submit.mediaHintEmbed") : t("submit.mediaHintNone")}
         >
           <input
             type="file"
@@ -216,7 +201,7 @@ export function SubmitRtmPage() {
 
         {(file || social?.iframeSrc) && (
           <div>
-            <SectionTitle>תצוגה מקדימה</SectionTitle>
+            <SectionTitle>{t("submit.preview")}</SectionTitle>
             <div className="mx-auto max-w-sm">
               <MediaPreview
                 mediaType={file ? "image" : "embed"}
@@ -235,7 +220,7 @@ export function SubmitRtmPage() {
 
         <div className="flex items-center gap-3 border-t border-[var(--color-line)] pt-4">
           <Button onClick={() => void submit()} disabled={!canSubmit || saving}>
-            {saving ? "שומר…" : "פרסום ה‑RTM"}
+            {saving ? "שומר…" : t("submit.button")}
           </Button>
           <span className="text-xs text-[var(--color-ink-soft)]">
             יתווסף לחודש {monthKeyOf(new Date(`${date}T12:00:00`))}

@@ -69,6 +69,8 @@ export interface AppContent {
   announcement: string;
   /** The competition rules (markdown-ish). Empty → the built-in default. */
   rules: string;
+  /** Per-key overrides for UI strings (see data/strings.ts); missing → default. */
+  strings: Record<string, string>;
 }
 
 export interface AppSettings {

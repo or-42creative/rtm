@@ -75,8 +75,19 @@ service cloud.firestore {
             && request.resource.data.get('reactions', {})
                  .diff(resource.data.get('reactions', {}))
                  .affectedKeys().hasOnly([request.auth.uid]))
+        // Creator appeals their own disqualification (only these two fields).
         || (isOffice()
             && resource.data.createdByUid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['appealStatus', 'appealReason'])
+            && request.resource.data.appealStatus == 'pending')
+        // Creator edits their own RTM's content — only while active, and may not
+        // touch the moderation verdict (status / dqReason / appealStatus).
+        || (isOffice()
+            && resource.data.createdByUid == request.auth.uid
+            && resource.data.get('status', 'active') == 'active'
+            && request.resource.data.get('status', 'active') == 'active'
+            && request.resource.data.get('dqReason', '') == resource.data.get('dqReason', '')
+            && request.resource.data.get('appealStatus', 'none') == resource.data.get('appealStatus', 'none')
             && request.resource.data.createdByUid == resource.data.createdByUid
             && request.resource.data.ideaOwnerIds is list
             && request.resource.data.ideaOwnerIds.size() >= 1

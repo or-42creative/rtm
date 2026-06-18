@@ -7,6 +7,9 @@ import {
   addEmployee,
   deleteRtm,
   deleteUser,
+  disqualifyRtm,
+  reinstateRtm,
+  resolveAppeal,
   DEFAULT_SETTINGS,
   saveSettings,
   seedData,
@@ -445,6 +448,19 @@ function RtmsTab() {
               key={r.id}
               rtm={r}
               editHref={`/edit/${r.id}`}
+              onDisqualify={(rtm) => {
+                const reason = window.prompt("מה סיבת הפסילה?", rtm.dqReason ?? "");
+                if (reason && reason.trim()) void disqualifyRtm(rtm.id, reason);
+              }}
+              onReinstate={(rtm) => {
+                if (confirm(`לבטל את הפסילה של "${rtm.name}"?`)) void reinstateRtm(rtm.id);
+              }}
+              onResolveAppeal={(rtm, accept) => {
+                const q = accept
+                  ? `לקבל את הערעור ולהחזיר את "${rtm.name}" לתחרות?`
+                  : `לדחות את הערעור על "${rtm.name}"?`;
+                if (confirm(q)) void resolveAppeal(rtm.id, accept);
+              }}
               onDelete={(rtm) => {
                 if (confirm(`למחוק את "${rtm.name}"? הנקודות שלו יוסרו מהדירוג.`)) {
                   void deleteRtm(rtm.id);

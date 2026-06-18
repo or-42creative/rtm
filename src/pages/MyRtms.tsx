@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { useAuth } from "@/lib/auth";
 import { useAppData } from "@/lib/appData";
+import { appealRtm } from "@/lib/db";
 import { currentMonthKey, monthLabel } from "@/lib/scores";
 import type { Rtm } from "@/types";
 import { Button, Card, EmptyState, SectionTitle } from "@/components/ui";
@@ -12,11 +13,14 @@ export function MyRtmsPage() {
   const { appUser } = useAuth();
   const { rtms, clients, t } = useAppData();
   const myId = appUser?.employeeId ?? "";
+  const uid = appUser?.uid;
 
-  const { mine, byMonth, thisMonthCount, amThisMonth, isAM } = useMemo(() => {
-    const mine = rtms.filter((r) => r.ideaOwnerIds.includes(myId));
+  const { mineCount, byMonth, thisMonthCount, amThisMonth, isAM, disqualified } = useMemo(() => {
+    const active = rtms.filter(
+      (r) => r.ideaOwnerIds.includes(myId) && r.status !== "disqualified",
+    );
     const byMonth = new Map<string, Rtm[]>();
-    for (const r of mine) {
+    for (const r of active) {
       const list = byMonth.get(r.monthKey) ?? [];
       list.push(r);
       byMonth.set(r.monthKey, list);
@@ -24,16 +28,25 @@ export function MyRtmsPage() {
     const cm = currentMonthKey();
     const isAM = clients.some((c) => c.accountManagerId === myId);
     const amThisMonth = rtms.filter(
-      (r) => r.accountManagerId === myId && r.monthKey === cm,
+      (r) => r.accountManagerId === myId && r.monthKey === cm && r.status !== "disqualified",
     ).length;
+    const disqualified = rtms.filter(
+      (r) => r.createdByUid === uid && r.status === "disqualified",
+    );
     return {
-      mine,
+      mineCount: active.length,
       byMonth: [...byMonth.entries()].sort((a, b) => b[0].localeCompare(a[0])),
       thisMonthCount: byMonth.get(cm)?.length ?? 0,
       amThisMonth,
       isAM,
+      disqualified,
     };
-  }, [rtms, clients, myId]);
+  }, [rtms, clients, myId, uid]);
+
+  const appeal = (rtm: Rtm) => {
+    const reason = window.prompt("מה סיבת הערעור?", rtm.appealReason ?? "");
+    if (reason && reason.trim()) void appealRtm(rtm.id, reason);
+  };
 
   return (
     <div>
@@ -41,7 +54,7 @@ export function MyRtmsPage() {
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <Stat label={`${t("my.statMonth")} (${monthLabel(currentMonthKey())})`} value={thisMonthCount} />
-        <Stat label={t("my.statTotal")} value={mine.length} />
+        <Stat label={t("my.statTotal")} value={mineCount} />
         {isAM && <Stat label={t("my.statAm")} value={amThisMonth} tone="gold" />}
       </div>
 
@@ -65,7 +78,7 @@ export function MyRtmsPage() {
                   <RtmCard
                     key={r.id}
                     rtm={r}
-                    editHref={r.createdByUid === appUser?.uid ? `/edit/${r.id}` : undefined}
+                    editHref={r.createdByUid === uid ? `/edit/${r.id}` : undefined}
                   />
                 ))}
               </div>
@@ -73,6 +86,20 @@ export function MyRtmsPage() {
           ))
         )}
       </div>
+
+      {disqualified.length > 0 && (
+        <section className="mt-10">
+          <SectionTitle hint={`${disqualified.length}`}>⛔ RTMים שנפסלו</SectionTitle>
+          <p className="mb-3 text-sm text-[var(--color-ink-soft)]">
+            ה‑RTMים האלה נפסלו ולא נספרים. אפשר לערער — מנהל המערכת יקבל או ידחה.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {disqualified.map((r) => (
+              <RtmCard key={r.id} rtm={r} onAppeal={appeal} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -33,7 +33,7 @@ export function DashboardPage() {
   );
 
   const monthRtms = useMemo(
-    () => rtms.filter((r) => r.monthKey === monthKey),
+    () => rtms.filter((r) => r.monthKey === monthKey && r.status !== "disqualified"),
     [rtms, monthKey],
   );
   const totalLikes = useMemo(
@@ -53,7 +53,10 @@ export function DashboardPage() {
   const months = useMemo(() => {
     const keys = lastMonths(monthKey, 6);
     const counts = new Map<string, number>();
-    for (const r of rtms) counts.set(r.monthKey, (counts.get(r.monthKey) ?? 0) + 1);
+    for (const r of rtms) {
+      if (r.status === "disqualified") continue;
+      counts.set(r.monthKey, (counts.get(r.monthKey) ?? 0) + 1);
+    }
     return keys.map((k, i) => ({
       label: shortMonthLabel(k),
       value: counts.get(k) ?? 0,

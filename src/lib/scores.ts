@@ -93,7 +93,7 @@ export function dailyCounts(allRtms: Rtm[], monthKey: string): BarDatum[] {
   const days = daysInMonth(monthKey);
   const counts = new Array(days + 1).fill(0) as number[];
   for (const r of allRtms) {
-    if (r.monthKey !== monthKey) continue;
+    if (r.monthKey !== monthKey || r.status === "disqualified") continue;
     const d = toDate(r.date);
     if (d) counts[d.getDate()] += 1;
   }
@@ -148,7 +148,9 @@ export function computeMonthScores(
   const clientName = new Map(clients.map((c) => [c.id, c.name] as const));
   const isAccountManager = new Set(clients.map((c) => c.accountManagerId));
 
-  const rtms = allRtms.filter((r) => r.monthKey === monthKey);
+  const rtms = allRtms.filter(
+    (r) => r.monthKey === monthKey && r.status !== "disqualified",
+  );
 
   const idea = new Map<string, number>();
   const am = new Map<string, number>();

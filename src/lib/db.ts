@@ -177,6 +177,32 @@ export async function updateRtm(
 
 export const deleteRtm = (id: string) => deleteDoc(doc(db, COL.rtms, id));
 
+/* ------------------------------ moderation (admin) --------------------------- */
+
+export const disqualifyRtm = (id: string, reason: string) =>
+  updateDoc(doc(db, COL.rtms, id), {
+    status: "disqualified",
+    dqReason: reason.trim(),
+    appealStatus: "none",
+    appealReason: "",
+  });
+
+export const reinstateRtm = (id: string) =>
+  updateDoc(doc(db, COL.rtms, id), { status: "active", appealStatus: "none" });
+
+/** Admin's verdict on a pending appeal. */
+export const resolveAppeal = (id: string, accept: boolean) =>
+  accept
+    ? updateDoc(doc(db, COL.rtms, id), { status: "active", appealStatus: "accepted" })
+    : updateDoc(doc(db, COL.rtms, id), { appealStatus: "rejected" });
+
+/** The RTM's creator appeals a disqualification. */
+export const appealRtm = (id: string, reason: string) =>
+  updateDoc(doc(db, COL.rtms, id), {
+    appealStatus: "pending",
+    appealReason: reason.trim(),
+  });
+
 /** Toggle the current user's ❤️ on an RTM (stored as reactions[uid] = true). */
 export const toggleReaction = (rtmId: string, uid: string, liked: boolean) =>
   updateDoc(doc(db, COL.rtms, rtmId), {

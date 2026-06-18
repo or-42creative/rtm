@@ -44,7 +44,19 @@ export interface Rtm {
   createdAt: Timestamp;
   /** uid → true for everyone who hearted this RTM. */
   reactions?: Record<string, boolean>;
+
+  /** Moderation. Missing/`active` = counts normally; `disqualified` = excluded
+   *  from points, dashboard and the wall. */
+  status?: RtmStatus;
+  /** Admin's reason for disqualifying. */
+  dqReason?: string;
+  /** Appeal lifecycle by the RTM's creator. */
+  appealStatus?: AppealStatus;
+  appealReason?: string;
 }
+
+export type RtmStatus = "active" | "disqualified";
+export type AppealStatus = "none" | "pending" | "accepted" | "rejected";
 
 export type UserRole = "admin" | "member";
 

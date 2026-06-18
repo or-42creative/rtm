@@ -5,14 +5,14 @@ import { useAppData } from "@/lib/appData";
 import {
   computeMonthScores,
   currentMonthKey,
+  dailyCounts,
   lastMonths,
   monthLabel,
   prevMonthKey,
   shortMonthLabel,
 } from "@/lib/scores";
-import type { ScoreRow } from "@/types";
+import type { Rtm, ScoreRow } from "@/types";
 import { Avatar, Badge, Button, Card, EmptyState, SectionTitle, Spinner } from "@/components/ui";
-import { CountUp } from "@/components/CountUp";
 import { BarChart } from "@/components/BarChart";
 import { Collage } from "@/components/Collage";
 
@@ -20,7 +20,7 @@ const countLikes = (reactions?: Record<string, boolean>) =>
   reactions ? Object.keys(reactions).length : 0;
 
 export function DashboardPage() {
-  const { rtms, employees, clients, loading } = useAppData();
+  const { rtms, employees, clients, settings, loading } = useAppData();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
 
   const scores = useMemo(
@@ -36,13 +36,21 @@ export function DashboardPage() {
     () => rtms.filter((r) => r.monthKey === monthKey),
     [rtms, monthKey],
   );
-
   const totalLikes = useMemo(
-    () => monthRtms.reduce((sum, r) => sum + countLikes(r.reactions), 0),
+    () => monthRtms.reduce((s, r) => s + countLikes(r.reactions), 0),
+    [monthRtms],
+  );
+  const loved = useMemo(
+    () =>
+      monthRtms
+        .filter((r) => countLikes(r.reactions) > 0)
+        .sort((a, b) => countLikes(b.reactions) - countLikes(a.reactions))
+        .slice(0, 5),
     [monthRtms],
   );
 
-  const trend = useMemo(() => {
+  const daily = useMemo(() => dailyCounts(rtms, monthKey), [rtms, monthKey]);
+  const months = useMemo(() => {
     const keys = lastMonths(monthKey, 6);
     const counts = new Map<string, number>();
     for (const r of rtms) counts.set(r.monthKey, (counts.get(r.monthKey) ?? 0) + 1);
@@ -50,6 +58,7 @@ export function DashboardPage() {
       label: shortMonthLabel(k),
       value: counts.get(k) ?? 0,
       highlight: i === keys.length - 1,
+      title: `${monthLabel(k)} · ${counts.get(k) ?? 0} RTM`,
     }));
   }, [rtms, monthKey]);
 
@@ -62,6 +71,8 @@ export function DashboardPage() {
   }
 
   const isCurrent = monthKey === currentMonthKey();
+  const prize = settings.content.monthlyPrize.trim();
+  const announcement = settings.content.announcement.trim();
 
   return (
     <div className="space-y-10">
@@ -74,25 +85,52 @@ export function DashboardPage() {
         <MonthNav monthKey={monthKey} onChange={setMonthKey} canGoNext={!isCurrent} />
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard
-          emoji="🚀"
-          label={isCurrent ? "RTMים החודש" : "RTMים בחודש"}
-          value={scores.rtmCount}
-          theme="ink"
-        />
-        <StatCard emoji="❤️" label="לייקים שנאספו" value={totalLikes} theme="pink" />
-        <Card className="flex flex-col justify-center">
-          <p className="text-sm font-bold text-[var(--color-ink-soft)]">🏅 הלקוח המוביל</p>
-          <p className="mt-1 truncate text-2xl font-black">
-            {scores.topClient ? scores.topClient.name : "—"}
-          </p>
-          {scores.topClient && <Badge tone="accent">{scores.topClient.count} RTM</Badge>}
+      {announcement && (
+        <div className="flex items-center gap-2 rounded-2xl bg-[var(--color-ink)] px-5 py-3 font-bold text-white animate-fade-up">
+          <span className="text-lg">📢</span>
+          <span>{announcement}</span>
+        </div>
+      )}
+
+      {/* 1 — Winners */}
+      <section>
+        <SectionTitle>🏆 הזוכים של {monthLabel(prevMonthKey(monthKey))}</SectionTitle>
+        {prev.rtmCount === 0 ? (
+          <EmptyState title="אין עדיין זוכים לחודש הקודם" />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <WinnerCard title="מלך/ת הרעיונות 👑" subtitle="הכי הרבה נקודות רעיון" row={prev.winners.topIdea} />
+            <WinnerCard title="מנהל/ת הלקוח של החודש ⭐" subtitle="הכי הרבה RTM ללקוחות" row={prev.winners.topAccountManager} />
+          </div>
+        )}
+      </section>
+
+      {/* 1b — Prize + top client */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Card className="flex items-center gap-4 border-[var(--color-gold)]/50 bg-gradient-to-l from-[var(--color-gold)]/15 to-transparent">
+          <span className="text-4xl animate-float">🎁</span>
+          <div className="min-w-0">
+            <p className="text-xs font-black text-[#9a7b00]">הפרס של החודש</p>
+            <p className="text-lg font-black">{prize || "ייקבע בקרוב ✨"}</p>
+          </div>
+        </Card>
+        <Card className="flex items-center gap-4">
+          <span className="text-4xl">🏅</span>
+          <div className="min-w-0">
+            <p className="text-xs font-black text-[var(--color-ink-soft)]">הלקוח המוביל</p>
+            <p className="truncate text-lg font-black">{scores.topClient ? scores.topClient.name : "—"}</p>
+            {scores.topClient && <Badge tone="accent">{scores.topClient.count} RTM</Badge>}
+          </div>
         </Card>
       </div>
 
-      {/* The collage — the wall of RTMs */}
+      {/* 1c — Current standings */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Leaderboard title="💡 מביאי הרעיונות" unit="נק׳" rows={scores.ideaScores} />
+        <Leaderboard title="🎯 מנהלי לקוח מובילים" unit="RTM" rows={scores.amScores} />
+      </div>
+
+      {/* 2 — Collage */}
       <section>
         <SectionTitle hint={`${monthRtms.length} פוסטים`}>🎬 הקיר של ה‑RTMים</SectionTitle>
         {monthRtms.length === 0 ? (
@@ -110,31 +148,52 @@ export function DashboardPage() {
         )}
       </section>
 
-      {/* Trend chart */}
+      {/* 3 — Pace by day */}
       <Card>
-        <SectionTitle hint="6 חודשים אחרונים">📈 קצב ה‑RTMים</SectionTitle>
-        <BarChart data={trend} />
+        <SectionTitle hint={`${scores.rtmCount} החודש`}>📈 קצב החודש — לפי ימים</SectionTitle>
+        <BarChart data={daily} />
       </Card>
 
-      {/* Last month winners */}
-      <section>
-        <SectionTitle>🏆 הזוכים של {monthLabel(prevMonthKey(monthKey))}</SectionTitle>
-        {prev.rtmCount === 0 ? (
-          <EmptyState title="אין עדיין זוכים לחודש הקודם" />
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <WinnerCard title="מלך/ת הרעיונות 👑" subtitle="הכי הרבה נקודות רעיון" row={prev.winners.topIdea} />
-            <WinnerCard title="מנהל/ת הלקוח של החודש ⭐" subtitle="הכי הרבה RTM ללקוחות" row={prev.winners.topAccountManager} />
-          </div>
-        )}
-      </section>
-
-      {/* Leaderboards */}
+      {/* 4 — Likes + previous months */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Leaderboard title="💡 מביאי הרעיונות" unit="נק׳" rows={scores.ideaScores} />
-        <Leaderboard title="🎯 מנהלי לקוח מובילים" unit="RTM" rows={scores.amScores} />
+        <Card>
+          <SectionTitle hint={`${totalLikes} לייקים`}>❤️ הכי אהובים החודש</SectionTitle>
+          {loved.length === 0 ? (
+            <p className="py-6 text-center text-sm text-[var(--color-ink-soft)]">
+              עדיין אין לייקים החודש. תהיו הראשונים לפרגן!
+            </p>
+          ) : (
+            <ol className="space-y-1">
+              {loved.map((r, i) => (
+                <LovedRow key={r.id} rtm={r} rank={i} />
+              ))}
+            </ol>
+          )}
+        </Card>
+        <Card>
+          <SectionTitle>📅 חודשים קודמים</SectionTitle>
+          <BarChart data={months} />
+        </Card>
       </div>
     </div>
+  );
+}
+
+function LovedRow({ rtm, rank }: { rtm: Rtm; rank: number }) {
+  const medals = ["🥇", "🥈", "🥉"];
+  return (
+    <li className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-[var(--color-cloud)]">
+      <span className="w-6 text-center text-lg font-black">
+        {medals[rank] ?? <span className="text-sm text-[var(--color-ink-soft)]">{rank + 1}</span>}
+      </span>
+      <span className="me-auto min-w-0">
+        <span className="block truncate font-bold">{rtm.name}</span>
+        <span className="block truncate text-xs text-[var(--color-ink-soft)]">{rtm.clientName}</span>
+      </span>
+      <span className="shrink-0 font-black text-[var(--c-pink)]">
+        ❤️ {countLikes(rtm.reactions)}
+      </span>
+    </li>
   );
 }
 
@@ -171,32 +230,6 @@ function MonthNav({
         ←
       </button>
     </div>
-  );
-}
-
-function StatCard({
-  emoji,
-  label,
-  value,
-  theme,
-}: {
-  emoji: string;
-  label: string;
-  value: number;
-  theme: "ink" | "pink";
-}) {
-  const bg =
-    theme === "ink"
-      ? "bg-[var(--color-ink)] text-white"
-      : "bg-gradient-to-br from-[var(--c-pink)] to-[var(--c-purple)] text-white";
-  return (
-    <Card className={`relative overflow-hidden ${bg}`}>
-      <span className="absolute -bottom-4 -start-2 text-7xl opacity-15">{emoji}</span>
-      <p className="text-sm font-bold text-white/75">{label}</p>
-      <p className="mt-1 text-5xl font-black">
-        <CountUp value={value} />
-      </p>
-    </Card>
   );
 }
 

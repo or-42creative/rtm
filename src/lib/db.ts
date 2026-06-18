@@ -21,6 +21,7 @@ import type { User } from "firebase/auth";
 import { db, bootstrapAdminEmails } from "./firebase";
 import { monthKeyOf } from "./scores";
 import { SEED_EMPLOYEES, SEED_CLIENTS } from "@/data/seed";
+import { DEFAULT_CONTENT } from "@/data/content";
 import type {
   AppUser,
   AppSettings,
@@ -42,6 +43,7 @@ const SETTINGS_DOC = "app";
 
 export const DEFAULT_SETTINGS: AppSettings = {
   emailDigest: { enabled: false, frequency: "monthly", recipients: [] },
+  content: DEFAULT_CONTENT,
 };
 
 type Snap = QueryDocumentSnapshot<DocumentData>;
@@ -70,9 +72,13 @@ export const subscribeUsers = (cb: (rows: AppUser[]) => void) =>
   );
 
 export const subscribeSettings = (cb: (s: AppSettings) => void) =>
-  onSnapshot(doc(db, COL.settings, SETTINGS_DOC), (snap) =>
-    cb(snap.exists() ? (snap.data() as AppSettings) : DEFAULT_SETTINGS),
-  );
+  onSnapshot(doc(db, COL.settings, SETTINGS_DOC), (snap) => {
+    const data = (snap.data() ?? {}) as Partial<AppSettings>;
+    cb({
+      emailDigest: { ...DEFAULT_SETTINGS.emailDigest, ...data.emailDigest },
+      content: { ...DEFAULT_CONTENT, ...data.content },
+    });
+  });
 
 /* --------------------------------- users/auth -------------------------------- */
 

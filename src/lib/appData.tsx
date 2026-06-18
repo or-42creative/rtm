@@ -7,13 +7,20 @@ import {
   type ReactNode,
 } from "react";
 
-import { subscribeClients, subscribeEmployees, subscribeRtms } from "./db";
-import type { Client, Employee, Rtm } from "@/types";
+import {
+  DEFAULT_SETTINGS,
+  subscribeClients,
+  subscribeEmployees,
+  subscribeRtms,
+  subscribeSettings,
+} from "./db";
+import type { AppSettings, Client, Employee, Rtm } from "@/types";
 
 interface AppDataValue {
   employees: Employee[];
   clients: Client[];
   rtms: Rtm[];
+  settings: AppSettings;
   loading: boolean;
   /** id → employee name, "—" when missing. */
   employeeName: (id: string | null | undefined) => string;
@@ -25,13 +32,34 @@ interface AppDataValue {
 
 const AppDataContext = createContext<AppDataValue | null>(null);
 
-export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [rtms, setRtms] = useState<Rtm[]>([]);
-  const [ready, setReady] = useState({ e: false, c: false, r: false });
+export interface DemoData {
+  employees: Employee[];
+  clients: Client[];
+  rtms: Rtm[];
+  settings?: AppSettings;
+}
+
+export function AppDataProvider({
+  children,
+  demo,
+}: {
+  children: ReactNode;
+  /** Render with static data instead of live Firestore (offline preview/tests). */
+  demo?: DemoData;
+}) {
+  const [employees, setEmployees] = useState<Employee[]>(demo?.employees ?? []);
+  const [clients, setClients] = useState<Client[]>(demo?.clients ?? []);
+  const [rtms, setRtms] = useState<Rtm[]>(demo?.rtms ?? []);
+  const [settings, setSettings] = useState<AppSettings>(
+    demo?.settings ?? DEFAULT_SETTINGS,
+  );
+  const [ready, setReady] = useState(
+    demo ? { e: true, c: true, r: true } : { e: false, c: false, r: false },
+  );
 
   useEffect(() => {
+    if (demo) return;
+    const unsubS = subscribeSettings(setSettings);
     const unsubE = subscribeEmployees((rows) => {
       setEmployees(rows);
       setReady((s) => (s.e ? s : { ...s, e: true }));
@@ -45,6 +73,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setReady((s) => (s.r ? s : { ...s, r: true }));
     });
     return () => {
+      unsubS();
       unsubE();
       unsubC();
       unsubR();
@@ -58,13 +87,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       employees,
       clients,
       rtms,
+      settings,
       loading: !(ready.e && ready.c && ready.r),
       employeeName: (id) => (id ? (names.get(id) ?? "—") : "—"),
       accountManagers: employees.filter((e) => amIds.has(e.id)),
       activeEmployees: employees.filter((e) => e.active),
       activeClients: clients.filter((c) => c.active),
     };
-  }, [employees, clients, rtms, ready]);
+  }, [employees, clients, rtms, settings, ready]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }

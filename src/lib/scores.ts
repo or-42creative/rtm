@@ -71,6 +71,46 @@ export const lastMonths = (endKey: string, n: number): string[] => {
   return keys;
 };
 
+export const daysInMonth = (key: string): number => {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(y, m, 0).getDate();
+};
+
+export interface BarDatum {
+  label: string;
+  value: number;
+  highlight?: boolean;
+  title?: string;
+}
+
+const toDate = (ts: unknown): Date | null =>
+  ts && typeof (ts as { toDate?: unknown }).toDate === "function"
+    ? (ts as { toDate: () => Date }).toDate()
+    : null;
+
+/** RTMs per day across a month — the "pace" chart. Sparse day labels. */
+export function dailyCounts(allRtms: Rtm[], monthKey: string): BarDatum[] {
+  const days = daysInMonth(monthKey);
+  const counts = new Array(days + 1).fill(0) as number[];
+  for (const r of allRtms) {
+    if (r.monthKey !== monthKey) continue;
+    const d = toDate(r.date);
+    if (d) counts[d.getDate()] += 1;
+  }
+  const todayDay = new Date().getDate();
+  const isCurrent = monthKey === currentMonthKey();
+  return Array.from({ length: days }, (_, i) => {
+    const day = i + 1;
+    const show = day === 1 || day % 5 === 0 || day === days;
+    return {
+      label: show ? String(day) : "",
+      value: counts[day],
+      highlight: isCurrent && day === todayDay,
+      title: `${day} בחודש · ${counts[day]} RTM`,
+    };
+  });
+}
+
 const sortRows = (rows: ScoreRow[]): ScoreRow[] =>
   [...rows].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "he"));
 

@@ -61,12 +61,23 @@ export interface AppUser {
 
 export type DigestFrequency = "weekly" | "biweekly" | "monthly";
 
+/** Admin-editable copy shown around the app. */
+export interface AppContent {
+  /** "הפרס של החודש" — shown on the dashboard. */
+  monthlyPrize: string;
+  /** Optional banner shown at the top of the dashboard. */
+  announcement: string;
+  /** The competition rules (markdown-ish). Empty → the built-in default. */
+  rules: string;
+}
+
 export interface AppSettings {
   emailDigest: {
     enabled: boolean;
     frequency: DigestFrequency;
     recipients: string[];
   };
+  content: AppContent;
 }
 
 /** A row in a monthly leaderboard. */

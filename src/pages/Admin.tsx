@@ -20,6 +20,7 @@ import {
   updateEmployee,
 } from "@/lib/db";
 import type { AppSettings, AppUser, DigestFrequency } from "@/types";
+import { DEFAULT_RULES_MD } from "@/data/content";
 import {
   Badge,
   Button,
@@ -32,13 +33,14 @@ import {
 } from "@/components/ui";
 import { RtmCard } from "@/components/RtmCard";
 
-type Tab = "users" | "employees" | "clients" | "rtms" | "settings";
+type Tab = "users" | "employees" | "clients" | "rtms" | "content" | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "users", label: "משתמשים" },
   { id: "employees", label: "עובדים" },
   { id: "clients", label: "לקוחות" },
   { id: "rtms", label: "RTMים" },
+  { id: "content", label: "תוכן" },
   { id: "settings", label: "הגדרות" },
 ];
 
@@ -69,6 +71,7 @@ export function AdminPage() {
         {tab === "employees" && <EmployeesTab />}
         {tab === "clients" && <ClientsTab />}
         {tab === "rtms" && <RtmsTab />}
+        {tab === "content" && <ContentTab />}
         {tab === "settings" && <SettingsTab />}
       </div>
     </div>
@@ -410,6 +413,81 @@ function RtmsTab() {
         </div>
       )}
     </div>
+  );
+}
+
+/* ---------------------------------- content ---------------------------------- */
+
+function ContentTab() {
+  const { settings } = useAppData();
+  const [prize, setPrize] = useState(settings.content.monthlyPrize);
+  const [announcement, setAnnouncement] = useState(settings.content.announcement);
+  const [rules, setRules] = useState(settings.content.rules || DEFAULT_RULES_MD);
+  const [saved, setSaved] = useState(false);
+
+  // Sync once settings arrive / change from elsewhere.
+  useEffect(() => {
+    setPrize(settings.content.monthlyPrize);
+    setAnnouncement(settings.content.announcement);
+    setRules(settings.content.rules || DEFAULT_RULES_MD);
+  }, [settings]);
+
+  const save = async () => {
+    await saveSettings({
+      ...settings,
+      content: { monthlyPrize: prize, announcement, rules },
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <Card className="max-w-2xl space-y-5">
+      <div>
+        <SectionTitle>תוכן וטקסטים</SectionTitle>
+        <p className="text-sm text-[var(--color-ink-soft)]">
+          הכל נשמר ב‑Firestore ומתעדכן מיד לכל המשתמשים.
+        </p>
+      </div>
+
+      <Field label="🎁 הפרס של החודש" hint="מופיע בראש הדאשבורד ובתקנון.">
+        <input
+          className={inputClass}
+          value={prize}
+          onChange={(e) => setPrize(e.target.value)}
+          placeholder="למשל: ארוחת שף + יום חופש 🍽️"
+        />
+      </Field>
+
+      <Field
+        label="📢 הודעה לדאשבורד"
+        hint="באנר בראש הדאשבורד. השאירו ריק כדי להסתיר."
+      >
+        <input
+          className={inputClass}
+          value={announcement}
+          onChange={(e) => setAnnouncement(e.target.value)}
+          placeholder="הודעה לצוות…"
+        />
+      </Field>
+
+      <Field
+        label="📜 תקנון"
+        hint="תומך בעיצוב פשוט: ‎## כותרת · ‎- נקודת רשימה · ‎**מודגש**."
+      >
+        <textarea
+          className={cn(inputClass, "min-h-80 font-mono text-xs leading-relaxed")}
+          dir="rtl"
+          value={rules}
+          onChange={(e) => setRules(e.target.value)}
+        />
+      </Field>
+
+      <div className="flex items-center gap-3">
+        <Button onClick={() => void save()}>שמירת תוכן</Button>
+        {saved && <span className="text-sm font-bold text-green-600">נשמר ✓</span>}
+      </div>
+    </Card>
   );
 }
 

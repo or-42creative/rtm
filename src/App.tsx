@@ -1,13 +1,15 @@
+import { useEffect, useRef } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "@/lib/auth";
-import { AppDataProvider } from "@/lib/appData";
+import { AppDataProvider, useAppData } from "@/lib/appData";
 import { isFirebaseConfigured } from "@/lib/firebase";
+import { linkEmployeeToUser } from "@/lib/db";
 import { FullScreen, Spinner } from "@/components/ui";
 import { Layout } from "@/components/Layout";
 import { SetupNeeded } from "@/pages/SetupNeeded";
 import { LoginPage } from "@/pages/Login";
-import { LinkEmployeePage } from "@/pages/LinkEmployee";
+import { NotLinkedPage } from "@/pages/NotLinked";
 import { DashboardPage } from "@/pages/Dashboard";
 import { SubmitRtmPage } from "@/pages/SubmitRtm";
 import { MyRtmsPage } from "@/pages/MyRtms";
@@ -38,9 +40,50 @@ function Gate() {
 
   return (
     <AppDataProvider>
-      {appUser.employeeId ? <Shell isAdmin={appUser.role === "admin"} /> : <LinkEmployeePage />}
+      <Resolver />
     </AppDataProvider>
   );
+}
+
+/**
+ * No "who are you?" prompt: we silently link a signed-in account to the employee
+ * whose email matches. Admins always get in (so the first one can seed / manage
+ * + add people). Everyone else without a match sees the "not on the list" screen.
+ */
+function Resolver() {
+  const { appUser } = useAuth();
+  const { employees, loading, t } = useAppData();
+  const tried = useRef(false);
+
+  const email = (appUser?.email ?? "").toLowerCase();
+  const match = employees.find((e) => (e.email ?? "").toLowerCase() === email && !!email);
+
+  useEffect(() => {
+    if (!appUser || appUser.employeeId || !match || tried.current) return;
+    tried.current = true;
+    void linkEmployeeToUser(appUser.uid, match.id);
+  }, [appUser, match]);
+
+  if (!appUser) return null;
+
+  const isAdmin = appUser.role === "admin";
+  if (appUser.employeeId || isAdmin) return <Shell isAdmin={isAdmin} />;
+
+  // Still loading employees, or a match was found and the link write is in flight.
+  if (loading || match) {
+    return (
+      <FullScreen>
+        <div className="text-center">
+          <Spinner className="mx-auto size-8" />
+          <p className="mt-3 text-sm font-bold text-[var(--color-ink-soft)]">
+            {t("link.resolving")}
+          </p>
+        </div>
+      </FullScreen>
+    );
+  }
+
+  return <NotLinkedPage />;
 }
 
 function Shell({ isAdmin }: { isAdmin: boolean }) {

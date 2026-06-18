@@ -11,6 +11,9 @@
 export interface SeedEmployee {
   id: string;
   name: string;
+  /** Lower-cased Google email — used to auto-link the account on login.
+   *  Fill these from the office's "employees + emails" table, then re-seed. */
+  email?: string;
 }
 
 export interface SeedClient {
@@ -20,7 +23,7 @@ export interface SeedClient {
 }
 
 export const SEED_EMPLOYEES: SeedEmployee[] = [
-  { id: "e1", name: "אור אסולין" },
+  { id: "e1", name: "אור אסולין", email: "or@42creative.co.il" },
   { id: "e2", name: "יהונתן טוכפלד" },
   { id: "e3", name: "יראת טוכפלד" },
   { id: "e4", name: "רננה זומר" },

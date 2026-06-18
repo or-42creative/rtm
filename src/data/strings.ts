@@ -73,13 +73,12 @@ export const DEFAULT_STRINGS: Record<string, string> = {
     "ברגע שתעלה/י RTM ותסמן/י שהרעיון שלך — הוא יופיע כאן ותתחיל/י לצבור נקודות.",
   "my.emptyCta": "להעלות RTM ראשון",
 
-  // זיהוי משתמש
-  "link.title": "מי את/ה?",
-  "link.intro":
-    "חיברת את החשבון {email}. בחר/י את השם שלך מהרשימה כדי שנדע למי לשייך את ה‑RTMים והנקודות.",
-  "link.confirm": "זה אני",
+  // מסך "לא ברשימה" (כשהמייל לא שויך לעובד)
+  "link.resolving": "מזהים אותך…",
+  "link.notFoundTitle": "עוד לא ברשימה 👋",
+  "link.notFoundBody":
+    "המייל {email} עדיין לא משויך לאף עובד. פנה/י לאור כדי שיוסיף אותך לרשימת העובדים, ואז התחבר/י שוב.",
   "link.other": "התחברות עם חשבון אחר",
-  "link.notFound": "לא מוצא/ת את עצמך? פנה/י למנהל המערכת שיוסיף אותך לרשימת העובדים.",
 
   // תקנון
   "rules.kicker": "תקנון רשמי 📜",
@@ -177,13 +176,12 @@ export const STRING_GROUPS: StringGroup[] = [
     ],
   },
   {
-    title: "זיהוי משתמש (בחירת שם)",
+    title: "מסך 'לא ברשימה'",
     fields: [
-      { key: "link.title", label: "כותרת" },
-      { key: "link.intro", label: "טקסט פתיח ({email})", area: true },
-      { key: "link.confirm", label: "כפתור אישור" },
+      { key: "link.notFoundTitle", label: "כותרת" },
+      { key: "link.notFoundBody", label: "טקסט ({email})", area: true },
       { key: "link.other", label: "כפתור חשבון אחר" },
-      { key: "link.notFound", label: "לא נמצא", area: true },
+      { key: "link.resolving", label: "טקסט זיהוי" },
     ],
   },
   {

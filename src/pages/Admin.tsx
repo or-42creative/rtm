@@ -97,7 +97,9 @@ function InlineEdit({ value, onSave }: { value: string; onSave: (v: string) => v
   if (!editing) {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <span className="font-bold">{value}</span>
+        <span className={cn("font-bold", !value && "text-[var(--color-ink-soft)]")}>
+          {value || "—"}
+        </span>
         <button
           onClick={() => {
             setV(value);
@@ -238,41 +240,52 @@ function UsersTab() {
 function EmployeesTab() {
   const { employees } = useAppData();
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+
+  const add = () => {
+    if (!name.trim()) return;
+    void addEmployee(name, email);
+    setName("");
+    setEmail("");
+  };
 
   return (
     <div className="space-y-4">
       <SeedCard />
       <Card>
         <SectionTitle hint={`${employees.filter((e) => e.active).length} פעילים`}>עובדים</SectionTitle>
-        <div className="mb-4 flex gap-2">
+        <p className="mb-3 text-sm text-[var(--color-ink-soft)]">
+          המייל משמש לשיוך אוטומטי בכניסה. הוסיפו עובד/ת חדש/ה עם המייל שלו/ה, או
+          לחצו על ✎ ליד עובד כדי לעדכן מייל.
+        </p>
+        <div className="mb-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
           <input
             className={inputClass}
-            placeholder="שם עובד/ת חדש/ה"
+            placeholder="שם עובד/ת"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && name.trim()) {
-                void addEmployee(name);
-                setName("");
-              }
-            }}
           />
-          <Button
-            onClick={() => {
-              if (name.trim()) {
-                void addEmployee(name);
-                setName("");
-              }
-            }}
-          >
-            הוספה
-          </Button>
+          <input
+            className={inputClass}
+            dir="ltr"
+            placeholder="email@42creative.co.il"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && add()}
+          />
+          <Button onClick={add}>הוספה</Button>
         </div>
         {employees.map((e) => (
           <Row key={e.id}>
-            <span className="me-auto">
+            <span className="min-w-0 flex-1 basis-40">
               <InlineEdit value={e.name} onSave={(v) => void updateEmployee(e.id, { name: v })} />
               {!e.active && <Badge tone="neutral">לא פעיל</Badge>}
+            </span>
+            <span className="text-xs text-[var(--color-ink-soft)]" dir="ltr">
+              <InlineEdit
+                value={e.email ?? ""}
+                onSave={(v) => void updateEmployee(e.id, { email: v.toLowerCase() })}
+              />
             </span>
             <Button
               variant="ghost"

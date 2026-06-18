@@ -167,8 +167,12 @@ export const toggleReaction = (rtmId: string, uid: string, liked: boolean) =>
 
 /* ------------------------------- admin: employees ----------------------------- */
 
-export const addEmployee = (name: string) =>
-  addDoc(collection(db, COL.employees), { name: name.trim(), active: true, email: null });
+export const addEmployee = (name: string, email?: string) =>
+  addDoc(collection(db, COL.employees), {
+    name: name.trim(),
+    active: true,
+    email: email?.trim().toLowerCase() || null,
+  });
 
 export const updateEmployee = (id: string, patch: Partial<Employee>) =>
   updateDoc(doc(db, COL.employees, id), patch);
@@ -208,7 +212,7 @@ export async function seedData(): Promise<void> {
   for (const e of SEED_EMPLOYEES) {
     batch.set(
       doc(db, COL.employees, e.id),
-      { name: e.name, active: true },
+      { name: e.name, active: true, ...(e.email ? { email: e.email.toLowerCase() } : {}) },
       { merge: true },
     );
   }

@@ -44,9 +44,7 @@ export const SEED_EMPLOYEES: SeedEmployee[] = [
   { id: "e19", name: "עדי אפשטיין", email: "adi@42creative.co.il" },
   { id: "e20", name: "רחלי אופיר", email: "racheli@42creative.co.il" },
   { id: "e21", name: "עומר עסיס", email: "omer@42creative.co.il" },
-  // ⚠️ The emails table listed renana@ for both רננה זומר and רנן פאר-בריקמן.
-  // Left blank until the correct address for רנן is confirmed.
-  { id: "e22", name: "רנן פאר-בריקמן" },
+  { id: "e22", name: "רנן פאר-בריקמן", email: "renan@42creative.co.il" },
   { id: "e23", name: "רעות היזמי", email: "reut@42creative.co.il" },
   { id: "e24", name: "שירי הינדי", email: "shiri@42creative.co.il" },
 ];

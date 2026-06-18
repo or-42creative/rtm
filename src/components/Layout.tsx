@@ -28,7 +28,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-20 border-b border-[var(--color-line)] bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3">
           <NavLink to="/" className="me-auto">
-            <Logo size={34} />
+            <Logo size={40} />
           </NavLink>
 
           <nav className="order-3 flex w-full items-center gap-1 overflow-x-auto sm:order-2 sm:w-auto">

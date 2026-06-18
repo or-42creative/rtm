@@ -42,6 +42,13 @@ service cloud.firestore {
         && userDoc().role == 'admin';
     }
 
+    // Admin-configurable cap on idea owners per RTM (default 2).
+    function maxIdeaOwners() {
+      return exists(/databases/$(database)/documents/settings/app)
+        ? get(/databases/$(database)/documents/settings/app).data.get('maxIdeaOwners', 2)
+        : 2;
+    }
+
     match /employees/{id} {
       allow read: if isOffice();
       allow write: if isAdmin();
@@ -59,7 +66,7 @@ service cloud.firestore {
         && request.resource.data.createdByUid == request.auth.uid
         && request.resource.data.ideaOwnerIds is list
         && request.resource.data.ideaOwnerIds.size() >= 1
-        && request.resource.data.ideaOwnerIds.size() <= 2;
+        && request.resource.data.ideaOwnerIds.size() <= maxIdeaOwners();
       // Admins can edit anything. Anyone in the office may toggle ONLY their
       // own ❤️ reaction (no other field, and only their own key in the map).
       allow update: if isAdmin()

@@ -80,6 +80,8 @@ export interface AppSettings {
     recipients: string[];
   };
   content: AppContent;
+  /** Max idea owners allowed per RTM (admin-configurable; default 2). */
+  maxIdeaOwners: number;
 }
 
 /** A row in a monthly leaderboard. */

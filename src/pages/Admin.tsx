@@ -648,6 +648,30 @@ function SettingsTab() {
   return (
     <Card className="max-w-xl space-y-5">
       <div>
+        <SectionTitle>כללי התחרות</SectionTitle>
+      </div>
+      <Field
+        label="מקסימום מציעי רעיון ל‑RTM"
+        hint="כמה אנשים אפשר לשייך כבעלי רעיון לאותו פוסט (ברירת מחדל: 2)."
+      >
+        <input
+          type="number"
+          min={1}
+          max={10}
+          className={cn(inputClass, "max-w-[7rem]")}
+          value={settings.maxIdeaOwners}
+          onChange={(e) =>
+            setSettings((s) => ({
+              ...s,
+              maxIdeaOwners: Math.max(1, Math.min(10, Number(e.target.value) || 1)),
+            }))
+          }
+        />
+      </Field>
+
+      <hr className="border-[var(--color-line)]" />
+
+      <div>
         <SectionTitle>עדכון במייל (בקרוב)</SectionTitle>
         <p className="text-sm text-[var(--color-ink-soft)]">
           הגדרות לשליחת סיכום תקופתי במייל עם מצב התחרות. ההגדרות נשמרות כבר עכשיו;

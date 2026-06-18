@@ -50,7 +50,7 @@ export const DEFAULT_STRINGS: Record<string, string> = {
   "submit.dateHint": "ברירת המחדל היא היום — אפשר לשנות.",
   "submit.amNote": "מנהל/ת הלקוח: {name} — יקבל/תקבל נקודה אוטומטית על ה‑RTM הזה.",
   "submit.idea": "של מי הרעיון?",
-  "submit.ideaHint": "אפשר לבחור עד 2 אנשים. כל אחד מהם מקבל נקודה.",
+  "submit.ideaHint": "אפשר לבחור עד {max} אנשים. כל אחד מהם מקבל נקודה.",
   "submit.ideaPh": "בחרו בעל/ת רעיון…",
   "submit.ideaPhMore": "להוסיף עוד אחד…",
   "submit.link": "לינק ל‑RTM בסושיאל",

@@ -13,10 +13,11 @@ export function Wordmark({ className }: { className?: string }) {
   );
 }
 
-/** The neon mark (cropped from the logo) + wordmark. */
+/** The logo: the brand speech-bubble (transparent PNG, natural ratio). The
+ *  bubble already contains the name, so the text wordmark is off by default. */
 export function Logo({
   size = 36,
-  withWordmark = true,
+  withWordmark = false,
   className,
 }: {
   size?: number;
@@ -28,9 +29,8 @@ export function Logo({
       <img
         src="/mark.png"
         alt="RTM ושתיים"
-        width={size}
-        height={size}
-        className="shrink-0 rounded-xl object-cover"
+        style={{ height: size }}
+        className="w-auto shrink-0"
       />
       {withWordmark && <Wordmark className="text-lg" />}
     </div>

@@ -23,7 +23,8 @@ const today = () => new Date().toISOString().slice(0, 10);
 export function SubmitRtmPage() {
   const navigate = useNavigate();
   const { appUser } = useAuth();
-  const { activeClients, activeEmployees, employeeName, t } = useAppData();
+  const { activeClients, activeEmployees, employeeName, settings, t } = useAppData();
+  const maxOwners = settings.maxIdeaOwners;
 
   const [name, setName] = useState("");
   const [clientId, setClientId] = useState("");
@@ -38,7 +39,7 @@ export function SubmitRtmPage() {
   const social = useMemo(() => parseSocial(link), [link]);
 
   const addOwner = (id: string) => {
-    if (!id || ideaOwnerIds.includes(id) || ideaOwnerIds.length >= 2) return;
+    if (!id || ideaOwnerIds.includes(id) || ideaOwnerIds.length >= maxOwners) return;
     setIdeaOwnerIds((prev) => [...prev, id]);
   };
   const removeOwner = (id: string) =>
@@ -136,7 +137,7 @@ export function SubmitRtmPage() {
           </p>
         )}
 
-        <Field label={t("submit.idea")} required hint={t("submit.ideaHint")}>
+        <Field label={t("submit.idea")} required hint={t("submit.ideaHint", { max: maxOwners })}>
           <div className="space-y-2">
             {ideaOwnerIds.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -158,7 +159,7 @@ export function SubmitRtmPage() {
                 ))}
               </div>
             )}
-            {ideaOwnerIds.length < 2 && (
+            {ideaOwnerIds.length < maxOwners && (
               <select
                 className={inputClass}
                 value=""

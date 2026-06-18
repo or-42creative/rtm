@@ -62,7 +62,11 @@ export function MyRtmsPage() {
               <SectionTitle hint={`${list.length} RTM`}>{monthLabel(key)}</SectionTitle>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map((r) => (
-                  <RtmCard key={r.id} rtm={r} />
+                  <RtmCard
+                    key={r.id}
+                    rtm={r}
+                    editHref={r.createdByUid === appUser?.uid ? `/edit/${r.id}` : undefined}
+                  />
                 ))}
               </div>
             </section>

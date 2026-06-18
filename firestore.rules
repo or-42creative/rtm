@@ -68,13 +68,19 @@ service cloud.firestore {
         && request.resource.data.ideaOwnerIds.size() >= 1
         && request.resource.data.ideaOwnerIds.size() <= maxIdeaOwners();
       // Admins can edit anything. Anyone in the office may toggle ONLY their
-      // own ❤️ reaction (no other field, and only their own key in the map).
+      // own ❤️ reaction. The creator may edit their own RTM's fields.
       allow update: if isAdmin()
         || (isOffice()
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
             && request.resource.data.get('reactions', {})
                  .diff(resource.data.get('reactions', {}))
-                 .affectedKeys().hasOnly([request.auth.uid]));
+                 .affectedKeys().hasOnly([request.auth.uid]))
+        || (isOffice()
+            && resource.data.createdByUid == request.auth.uid
+            && request.resource.data.createdByUid == resource.data.createdByUid
+            && request.resource.data.ideaOwnerIds is list
+            && request.resource.data.ideaOwnerIds.size() >= 1
+            && request.resource.data.ideaOwnerIds.size() <= maxIdeaOwners());
       // Admins can remove any RTM; a member may delete one they created.
       allow delete: if isAdmin()
         || (isOffice() && resource.data.createdByUid == request.auth.uid);

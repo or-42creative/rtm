@@ -444,6 +444,7 @@ function RtmsTab() {
             <RtmCard
               key={r.id}
               rtm={r}
+              editHref={`/edit/${r.id}`}
               onDelete={(rtm) => {
                 if (confirm(`למחוק את "${rtm.name}"? הנקודות שלו יוסרו מהדירוג.`)) {
                   void deleteRtm(rtm.id);

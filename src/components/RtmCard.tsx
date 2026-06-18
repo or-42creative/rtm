@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { useAppData } from "@/lib/appData";
 import type { Rtm } from "@/types";
 import { MediaPreview } from "./MediaPreview";
@@ -15,9 +17,11 @@ const fmtDate = (rtm: Rtm): string => {
 export function RtmCard({
   rtm,
   onDelete,
+  editHref,
 }: {
   rtm: Rtm;
   onDelete?: (rtm: Rtm) => void;
+  editHref?: string;
 }) {
   const { employeeName } = useAppData();
 
@@ -49,11 +53,20 @@ export function RtmCard({
           ))}
           <Badge tone="neutral">🎯 {employeeName(rtm.accountManagerId)}</Badge>
         </div>
-        {onDelete && (
-          <div className="pt-1">
-            <Button variant="danger" className="px-3 py-1.5 text-xs" onClick={() => onDelete(rtm)}>
-              מחיקה
-            </Button>
+        {(editHref || onDelete) && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {editHref && (
+              <Link to={editHref}>
+                <Button variant="outline" className="px-3 py-1.5 text-xs">
+                  עריכה
+                </Button>
+              </Link>
+            )}
+            {onDelete && (
+              <Button variant="danger" className="px-3 py-1.5 text-xs" onClick={() => onDelete(rtm)}>
+                מחיקה
+              </Button>
+            )}
           </div>
         )}
       </div>

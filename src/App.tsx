@@ -92,6 +92,7 @@ function Shell({ isAdmin }: { isAdmin: boolean }) {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/submit" element={<SubmitRtmPage />} />
+        <Route path="/edit/:id" element={<SubmitRtmPage />} />
         <Route path="/me" element={<MyRtmsPage />} />
         <Route path="/rules" element={<RulesPage />} />
         {isAdmin && <Route path="/admin" element={<AdminPage />} />}

@@ -1,17 +1,18 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { useAuth } from "@/lib/auth";
 import { useAppData } from "@/lib/appData";
-import { createRtm } from "@/lib/db";
+import { createRtm, updateRtm } from "@/lib/db";
 import { fileToCompressedDataUrl } from "@/lib/image";
 import { parseSocial } from "@/lib/social";
 import { monthKeyOf } from "@/lib/scores";
-import type { MediaType } from "@/types";
+import type { MediaType, Rtm } from "@/types";
 import {
   Button,
   Card,
   Field,
+  FullScreen,
   SectionTitle,
   cn,
   inputClass,
@@ -19,31 +20,62 @@ import {
 import { MediaPreview } from "@/components/MediaPreview";
 
 const today = () => new Date().toISOString().slice(0, 10);
+const dateToInput = (rtm: Rtm): string => {
+  const d = rtm.date?.toDate?.() ?? new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+};
 
 export function SubmitRtmPage() {
+  const { id } = useParams();
   const navigate = useNavigate();
   const { appUser } = useAuth();
-  const { activeClients, activeEmployees, employeeName, settings, t } = useAppData();
+  const { activeClients, activeEmployees, employeeName, rtms, settings, t } = useAppData();
   const maxOwners = settings.maxIdeaOwners;
 
-  const [name, setName] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [ideaOwnerIds, setIdeaOwnerIds] = useState<string[]>([]);
-  const [link, setLink] = useState("");
-  const [date, setDate] = useState(today());
+  const editing = Boolean(id);
+  const existing = id ? rtms.find((r) => r.id === id) : null;
+  const canEdit =
+    !editing ||
+    (existing != null &&
+      (appUser?.role === "admin" || existing.createdByUid === appUser?.uid));
+
+  const [name, setName] = useState(existing?.name ?? "");
+  const [clientId, setClientId] = useState(existing?.clientId ?? "");
+  const [ideaOwnerIds, setIdeaOwnerIds] = useState<string[]>(existing?.ideaOwnerIds ?? []);
+  const [link, setLink] = useState(existing?.link ?? "");
+  const [date, setDate] = useState(existing ? dateToInput(existing) : today());
   const [file, setFile] = useState<File | null>(null);
+  const [removeMedia, setRemoveMedia] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Pre-fill when editing (once the RTM is available).
+  useEffect(() => {
+    if (!existing) return;
+    setName(existing.name);
+    setClientId(existing.clientId);
+    setIdeaOwnerIds(existing.ideaOwnerIds);
+    setLink(existing.link);
+    setDate(dateToInput(existing));
+    setFile(null);
+    setRemoveMedia(false);
+  }, [existing?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const client = activeClients.find((c) => c.id === clientId) ?? null;
   const social = useMemo(() => parseSocial(link), [link]);
+  const keptImage =
+    editing && !file && !removeMedia && existing?.mediaType === "image" && existing?.mediaUrl
+      ? existing.mediaUrl
+      : null;
 
-  const addOwner = (id: string) => {
-    if (!id || ideaOwnerIds.includes(id) || ideaOwnerIds.length >= maxOwners) return;
-    setIdeaOwnerIds((prev) => [...prev, id]);
+  const addOwner = (ownerId: string) => {
+    if (!ownerId || ideaOwnerIds.includes(ownerId) || ideaOwnerIds.length >= maxOwners) return;
+    setIdeaOwnerIds((prev) => [...prev, ownerId]);
   };
-  const removeOwner = (id: string) =>
-    setIdeaOwnerIds((prev) => prev.filter((x) => x !== id));
+  const removeOwner = (ownerId: string) =>
+    setIdeaOwnerIds((prev) => prev.filter((x) => x !== ownerId));
 
   const canSubmit =
     name.trim() && clientId && ideaOwnerIds.length >= 1 && link.trim() && date;
@@ -60,12 +92,15 @@ export function SubmitRtmPage() {
       if (file) {
         mediaUrl = await fileToCompressedDataUrl(file);
         mediaType = "image";
+      } else if (keptImage) {
+        mediaType = "image";
+        mediaUrl = keptImage;
       } else if (social?.iframeSrc) {
         mediaType = "embed";
         embedUrl = social.url;
       }
 
-      await createRtm({
+      const payload = {
         name: name.trim(),
         clientId: client.id,
         clientName: client.name,
@@ -76,9 +111,17 @@ export function SubmitRtmPage() {
         mediaUrl,
         embedUrl,
         date: new Date(`${date}T12:00:00`),
-        createdByUid: appUser.uid,
-        createdByEmployeeId: appUser.employeeId ?? null,
-      });
+      };
+
+      if (editing && id) {
+        await updateRtm(id, payload);
+      } else {
+        await createRtm({
+          ...payload,
+          createdByUid: appUser.uid,
+          createdByEmployeeId: appUser.employeeId ?? null,
+        });
+      }
       navigate("/me");
     } catch (e) {
       console.error(e);
@@ -87,11 +130,31 @@ export function SubmitRtmPage() {
     }
   };
 
+  if (editing && existing && !canEdit) {
+    return (
+      <FullScreen>
+        <Card className="max-w-md text-center">
+          <p className="text-lg font-black">אין לך הרשאה לערוך RTM זה</p>
+          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+            אפשר לערוך רק RTM שאת/ה העלית (או דרך מנהל המערכת).
+          </p>
+          <Link to="/me">
+            <Button className="mt-4" variant="outline">
+              חזרה ל‑RTMים שלי
+            </Button>
+          </Link>
+        </Card>
+      </FullScreen>
+    );
+  }
+
   const ownerOptions = activeEmployees.filter((e) => !ideaOwnerIds.includes(e.id));
+  const previewType: MediaType = file ? "image" : keptImage ? "image" : "embed";
+  const previewUrl = file ? URL.createObjectURL(file) : keptImage;
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-black">{t("submit.heading")}</h1>
+      <h1 className="text-2xl font-black">{editing ? "עריכת RTM" : t("submit.heading")}</h1>
       <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{t("submit.intro")}</p>
 
       <Card className="mt-5 space-y-5">
@@ -141,15 +204,15 @@ export function SubmitRtmPage() {
           <div className="space-y-2">
             {ideaOwnerIds.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {ideaOwnerIds.map((id) => (
+                {ideaOwnerIds.map((ownerId) => (
                   <span
-                    key={id}
+                    key={ownerId}
                     className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] py-1 pe-1 ps-3 text-sm font-bold text-white"
                   >
-                    {employeeName(id)}
+                    {employeeName(ownerId)}
                     <button
                       type="button"
-                      onClick={() => removeOwner(id)}
+                      onClick={() => removeOwner(ownerId)}
                       className="grid size-5 place-items-center rounded-full bg-white/20 hover:bg-white/30"
                       aria-label="הסרה"
                     >
@@ -160,11 +223,7 @@ export function SubmitRtmPage() {
               </div>
             )}
             {ideaOwnerIds.length < maxOwners && (
-              <select
-                className={inputClass}
-                value=""
-                onChange={(e) => addOwner(e.target.value)}
-              >
+              <select className={inputClass} value="" onChange={(e) => addOwner(e.target.value)}>
                 <option value="">
                   {ideaOwnerIds.length === 0 ? t("submit.ideaPh") : t("submit.ideaPhMore")}
                 </option>
@@ -189,26 +248,36 @@ export function SubmitRtmPage() {
         </Field>
 
         <Field
-          label={t("submit.media")}
-          hint={social?.iframeSrc ? t("submit.mediaHintEmbed") : t("submit.mediaHintNone")}
+          label={editing && keptImage ? "החלפת תמונה" : t("submit.media")}
+          hint={
+            social?.iframeSrc ? t("submit.mediaHintEmbed") : t("submit.mediaHintNone")
+          }
         >
           <input
             type="file"
             accept="image/*"
-            className={cn(inputClass, "file:me-3 file:rounded-lg file:border-0 file:bg-[var(--color-cloud)] file:px-3 file:py-1.5 file:font-bold")}
+            className={cn(
+              inputClass,
+              "file:me-3 file:rounded-lg file:border-0 file:bg-[var(--color-cloud)] file:px-3 file:py-1.5 file:font-bold",
+            )}
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
+          {keptImage && (
+            <button
+              type="button"
+              onClick={() => setRemoveMedia(true)}
+              className="mt-2 text-xs font-bold text-red-600 hover:underline"
+            >
+              הסרת התמונה הקיימת
+            </button>
+          )}
         </Field>
 
-        {(file || social?.iframeSrc) && (
+        {(previewUrl || (previewType === "embed" && social?.iframeSrc)) && (
           <div>
             <SectionTitle>{t("submit.preview")}</SectionTitle>
             <div className="mx-auto max-w-sm">
-              <MediaPreview
-                mediaType={file ? "image" : "embed"}
-                mediaUrl={file ? URL.createObjectURL(file) : null}
-                link={link}
-              />
+              <MediaPreview mediaType={previewType} mediaUrl={previewUrl} link={link} />
             </div>
           </div>
         )}
@@ -221,11 +290,13 @@ export function SubmitRtmPage() {
 
         <div className="flex items-center gap-3 border-t border-[var(--color-line)] pt-4">
           <Button onClick={() => void submit()} disabled={!canSubmit || saving}>
-            {saving ? "שומר…" : t("submit.button")}
+            {saving ? "שומר…" : editing ? "שמירת שינויים" : t("submit.button")}
           </Button>
-          <span className="text-xs text-[var(--color-ink-soft)]">
-            יתווסף לחודש {monthKeyOf(new Date(`${date}T12:00:00`))}
-          </span>
+          {!editing && (
+            <span className="text-xs text-[var(--color-ink-soft)]">
+              יתווסף לחודש {monthKeyOf(new Date(`${date}T12:00:00`))}
+            </span>
+          )}
         </div>
       </Card>
     </div>

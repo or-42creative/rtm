@@ -159,6 +159,18 @@ export async function createRtm(input: NewRtmInput): Promise<string> {
   return docRef.id;
 }
 
+export async function updateRtm(
+  id: string,
+  input: Omit<NewRtmInput, "createdByUid" | "createdByEmployeeId">,
+): Promise<void> {
+  const { date, ...rest } = input;
+  await updateDoc(doc(db, COL.rtms, id), {
+    ...rest,
+    date: Timestamp.fromDate(date),
+    monthKey: monthKeyOf(date),
+  });
+}
+
 export const deleteRtm = (id: string) => deleteDoc(doc(db, COL.rtms, id));
 
 /** Toggle the current user's ❤️ on an RTM (stored as reactions[uid] = true). */

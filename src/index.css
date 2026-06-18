@@ -11,13 +11,15 @@
   --color-paper: #ffffff;
   --color-cloud: #f4f4f5;
   --color-line: #e4e4e7;
-  --color-accent: #ff2e88;
-  --color-accent-soft: #ffe0ef;
-  --color-gold: #f4c430;
+  /* Brand palette — from the 42 RTM logo (purple bubble, yellow, pink). */
+  --color-brand: #7e4d9c;
+  --color-accent: #e9176d;
+  --color-accent-soft: #fde0ec;
+  --color-gold: #ffd400;
 
   /* Playful palette for tiles, charts, badges. */
-  --c-pink: #ff4d8d;
-  --c-purple: #8b5cf6;
+  --c-pink: #e9176d;
+  --c-purple: #7e4d9c;
   --c-blue: #3b82f6;
   --c-teal: #06b6d4;
   --c-lime: #84cc16;

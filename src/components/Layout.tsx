@@ -10,7 +10,7 @@ function navClass({ isActive }: { isActive: boolean }) {
   return cn(
     "rounded-full px-4 py-2 text-sm font-bold transition",
     isActive
-      ? "bg-[var(--color-ink)] text-white"
+      ? "bg-[var(--color-brand)] text-white"
       : "text-[var(--color-ink-soft)] hover:bg-[var(--color-cloud)]",
   );
 }

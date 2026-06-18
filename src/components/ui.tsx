@@ -7,7 +7,7 @@ type Variant = "primary" | "outline" | "ghost" | "danger" | "gold";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-[var(--color-ink)] text-white hover:bg-black focus-visible:ring-[var(--color-ink)]",
+    "bg-[var(--color-brand)] text-white hover:brightness-110 focus-visible:ring-[var(--color-brand)]",
   outline:
     "bg-white text-[var(--color-ink)] border border-[var(--color-line)] hover:border-[var(--color-ink)] focus-visible:ring-[var(--color-ink)]",
   ghost:

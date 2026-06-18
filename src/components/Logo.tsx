@@ -8,7 +8,7 @@ import { cn } from "./ui";
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span dir="rtl" className={cn("font-black tracking-tight", className)}>
-      <span className="text-[var(--color-accent)]">RTM</span> ושתיים
+      <span className="text-[var(--color-brand)]">RTM</span> ושתיים
     </span>
   );
 }

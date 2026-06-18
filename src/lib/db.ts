@@ -45,6 +45,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   emailDigest: { enabled: false, frequency: "monthly", recipients: [] },
   content: DEFAULT_CONTENT,
   maxIdeaOwners: 2,
+  collageCols: 4,
+  collageRows: 3,
 };
 
 type Snap = QueryDocumentSnapshot<DocumentData>;
@@ -79,6 +81,8 @@ export const subscribeSettings = (cb: (s: AppSettings) => void) =>
       emailDigest: { ...DEFAULT_SETTINGS.emailDigest, ...data.emailDigest },
       content: { ...DEFAULT_CONTENT, ...data.content },
       maxIdeaOwners: data.maxIdeaOwners ?? DEFAULT_SETTINGS.maxIdeaOwners,
+      collageCols: data.collageCols ?? DEFAULT_SETTINGS.collageCols,
+      collageRows: data.collageRows ?? DEFAULT_SETTINGS.collageRows,
     });
   });
 

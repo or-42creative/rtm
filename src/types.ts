@@ -82,6 +82,9 @@ export interface AppSettings {
   content: AppContent;
   /** Max idea owners allowed per RTM (admin-configurable; default 2). */
   maxIdeaOwners: number;
+  /** "Wall of fame" collage size: columns (width) × rows (length). */
+  collageCols: number;
+  collageRows: number;
 }
 
 /** A row in a monthly leaderboard. */

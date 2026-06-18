@@ -683,6 +683,39 @@ function SettingsTab() {
         />
       </Field>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="רוחב קיר התהילה (טורים)" hint="כמה פוסטים לרוחב, במסך רחב.">
+          <input
+            type="number"
+            min={2}
+            max={6}
+            className={cn(inputClass, "max-w-[7rem]")}
+            value={settings.collageCols}
+            onChange={(e) =>
+              setSettings((s) => ({
+                ...s,
+                collageCols: Math.max(2, Math.min(6, Number(e.target.value) || 4)),
+              }))
+            }
+          />
+        </Field>
+        <Field label="אורך קיר התהילה (שורות)" hint="סה״כ פוסטים = רוחב × אורך.">
+          <input
+            type="number"
+            min={1}
+            max={10}
+            className={cn(inputClass, "max-w-[7rem]")}
+            value={settings.collageRows}
+            onChange={(e) =>
+              setSettings((s) => ({
+                ...s,
+                collageRows: Math.max(1, Math.min(10, Number(e.target.value) || 3)),
+              }))
+            }
+          />
+        </Field>
+      </div>
+
       <hr className="border-[var(--color-line)]" />
 
       <div>

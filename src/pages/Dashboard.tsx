@@ -131,7 +131,7 @@ export function DashboardPage() {
             }
           />
         ) : (
-          <Collage rtms={monthRtms} />
+          <Collage rtms={monthRtms} cols={settings.collageCols} rows={settings.collageRows} />
         )}
       </section>
 

@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { parseSocial, type Platform } from "@/lib/social";
 import type { Rtm } from "@/types";
 import { LikeButton } from "./LikeButton";
@@ -31,11 +33,24 @@ const platformEmoji = (p?: Platform): string => {
   }
 };
 
-/** Pinterest-style colorful collage of the month's RTM media. */
-export function Collage({ rtms }: { rtms: Rtm[] }) {
+/** Pinterest-style colorful collage of the month's RTM media. The "wall of
+ *  fame" size is admin-configurable: `cols` (width) × `rows` (length) tiles. */
+export function Collage({
+  rtms,
+  cols = 4,
+  rows = 3,
+}: {
+  rtms: Rtm[];
+  cols?: number;
+  rows?: number;
+}) {
+  const shown = rtms.slice(0, Math.max(1, cols * rows));
   return (
-    <div className="columns-2 gap-3 sm:columns-3 lg:columns-4 [&>*]:mb-3">
-      {rtms.map((rtm, i) => (
+    <div
+      className="collage"
+      style={{ "--collage-cols": cols } as CSSProperties}
+    >
+      {shown.map((rtm, i) => (
         <CollageTile key={rtm.id} rtm={rtm} index={i} />
       ))}
     </div>

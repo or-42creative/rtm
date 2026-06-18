@@ -304,32 +304,45 @@ function EmployeesTab() {
 function SeedCard() {
   const { employees, clients } = useAppData();
   const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const seeded = employees.length > 0 || clients.length > 0;
+  const withEmail = employees.filter((e) => e.email).length;
+
+  const run = async () => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await seedData();
+      setMsg({ ok: true, text: "✓ העובדים, הלקוחות והמיילים סונכרנו בהצלחה." });
+    } catch (e) {
+      setMsg({
+        ok: false,
+        text: "❌ הסנכרון נכשל: " + (e instanceof Error ? e.message : "אין הרשאה"),
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Card className="bg-[var(--color-cloud)]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-black">אתחול נתונים</p>
+          <p className="font-black">אתחול / סנכרון נתונים</p>
           <p className="text-sm text-[var(--color-ink-soft)]">
-            טעינת רשימת העובדים והלקוחות מהקבצים שסופקו. אפשר להריץ שוב — זה לא
-            יוצר כפילויות ולא מוחק שיוכים קיימים.
+            טעינת רשימת העובדים, הלקוחות והמיילים מהקבצים. אפשר להריץ שוב — לא
+            נוצרות כפילויות ולא נמחקים שיוכים. ({withEmail} מתוך {employees.length} עם מייל)
           </p>
         </div>
-        <Button
-          variant={seeded ? "outline" : "primary"}
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            try {
-              await seedData();
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
+        <Button variant={seeded ? "outline" : "primary"} disabled={busy} onClick={() => void run()}>
           {busy ? "טוען…" : seeded ? "רענון מהקבצים" : "טעינת נתונים"}
         </Button>
       </div>
+      {msg && (
+        <p className={cn("mt-3 text-sm font-bold", msg.ok ? "text-green-600" : "text-red-600")}>
+          {msg.text}
+        </p>
+      )}
     </Card>
   );
 }

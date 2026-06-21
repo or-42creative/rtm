@@ -45,15 +45,17 @@ export function Collage({
   cols?: number;
   rows?: number;
 }) {
-  const shown = rtms.slice(0, Math.max(1, cols * rows));
+  // Show every post; `rows` caps the visible height and the rest scrolls.
   return (
     <div
-      className="collage"
-      style={{ "--collage-cols": cols } as CSSProperties}
+      className="overflow-y-auto pe-1"
+      style={{ maxHeight: `${Math.max(1, rows) * 17}rem` }}
     >
-      {shown.map((rtm, i) => (
-        <CollageTile key={rtm.id} rtm={rtm} index={i} />
-      ))}
+      <div className="collage" style={{ "--collage-cols": cols } as CSSProperties}>
+        {rtms.map((rtm, i) => (
+          <CollageTile key={rtm.id} rtm={rtm} index={i} />
+        ))}
+      </div>
     </div>
   );
 }

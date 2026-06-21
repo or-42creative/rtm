@@ -807,7 +807,7 @@ function SettingsTab() {
             }
           />
         </Field>
-        <Field label="אורך קיר התהילה (שורות)" hint="סה״כ פוסטים = רוחב × אורך.">
+        <Field label="אורך קיר התהילה (שורות)" hint="כמה שורות נראות לפני גלילה. כל הפוסטים מוצגים — השאר נגללים.">
           <input
             type="number"
             min={1}

@@ -43,7 +43,6 @@ import {
 import { DEFAULT_STRINGS, STRING_GROUPS } from "@/data/strings";
 
 type Tab =
-  | "users"
   | "employees"
   | "clients"
   | "rtms"
@@ -53,8 +52,7 @@ type Tab =
   | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "users", label: "משתמשים" },
-  { id: "employees", label: "עובדים" },
+  { id: "employees", label: "עובדים ומשתמשים" },
   { id: "clients", label: "לקוחות" },
   { id: "rtms", label: "RTMים" },
   { id: "claims", label: "טענות" },
@@ -64,7 +62,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export function AdminPage() {
-  const [tab, setTab] = useState<Tab>("users");
+  const [tab, setTab] = useState<Tab>("employees");
   return (
     <div>
       <h1 className="text-2xl font-black">ניהול</h1>
@@ -86,7 +84,6 @@ export function AdminPage() {
       </div>
 
       <div className="mt-6">
-        {tab === "users" && <UsersTab />}
         {tab === "employees" && <EmployeesTab />}
         {tab === "clients" && <ClientsTab />}
         {tab === "rtms" && <RtmsTab />}
@@ -162,99 +159,16 @@ function Row({ children }: { children: ReactNode }) {
   );
 }
 
-/* ----------------------------------- users ----------------------------------- */
-
-function UsersTab() {
-  const { appUser } = useAuth();
-  const { employees, employeeName } = useAppData();
-  const [users, setUsers] = useState<AppUser[]>([]);
-
-  useEffect(() => subscribeUsers(setUsers), []);
-
-  return (
-    <Card>
-      <SectionTitle hint={`${users.length} משתמשים`}>משתמשים מחוברים</SectionTitle>
-      <p className="mb-3 text-sm text-[var(--color-ink-soft)]">
-        משתמשים נוצרים אוטומטית בכניסה הראשונה. כאן אפשר לשייך אותם לעובד, להפוך
-        למנהל מערכת או להסיר.
-      </p>
-      {users.length === 0 ? (
-        <EmptyState title="אין עדיין משתמשים" />
-      ) : (
-        users
-          .slice()
-          .sort((a, b) => (a.displayName ?? "").localeCompare(b.displayName ?? "", "he"))
-          .map((u) => {
-            const isSelf = u.uid === appUser?.uid;
-            return (
-              <Row key={u.uid}>
-                <div className="min-w-0 flex-1 basis-48">
-                  <div className="flex items-center gap-1.5 font-bold">
-                    {u.employeeId ? (
-                      <Link to={`/employee/${u.employeeId}`} className="truncate hover:underline">
-                        {employeeName(u.employeeId)}
-                      </Link>
-                    ) : (
-                      <span className="truncate">{u.displayName}</span>
-                    )}
-                    {u.role === "admin" && <Badge tone="accent">אדמין</Badge>}
-                    {isSelf && <span className="text-xs text-[var(--color-ink-soft)]">(את/ה)</span>}
-                  </div>
-                  <div className="truncate text-xs text-[var(--color-ink-soft)]" dir="ltr">
-                    {u.email}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    className={cn(selectInline, "w-44")}
-                    value={u.employeeId ?? ""}
-                    onChange={(e) => void setUserEmployee(u.uid, e.target.value || null)}
-                  >
-                    <option value="">— לא משויך —</option>
-                    {employees.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <Button
-                    variant="outline"
-                    className="px-3 py-1.5 text-xs"
-                    disabled={isSelf}
-                    onClick={() =>
-                      void setUserRole(u.uid, u.role === "admin" ? "member" : "admin")
-                    }
-                  >
-                    {u.role === "admin" ? "הסר אדמין" : "הפוך לאדמין"}
-                  </Button>
-
-                  <Button
-                    variant="danger"
-                    className="px-3 py-1.5 text-xs"
-                    disabled={isSelf}
-                    onClick={() => {
-                      if (confirm(`להסיר את ${u.email}?`)) void deleteUser(u.uid);
-                    }}
-                  >
-                    הסרה
-                  </Button>
-                </div>
-              </Row>
-            );
-          })
-      )}
-    </Card>
-  );
-}
-
-/* --------------------------------- employees --------------------------------- */
+/* --------------------------- employees + users --------------------------- */
 
 function EmployeesTab() {
+  const { appUser } = useAuth();
   const { employees } = useAppData();
+  const [users, setUsers] = useState<AppUser[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+
+  useEffect(() => subscribeUsers(setUsers), []);
 
   const add = () => {
     if (!name.trim()) return;
@@ -263,14 +177,33 @@ function EmployeesTab() {
     setEmail("");
   };
 
+  const empIds = new Set(employees.map((e) => e.id));
+  const acctByEmp = new Map<string, AppUser>();
+  for (const u of users) if (u.employeeId && empIds.has(u.employeeId)) acctByEmp.set(u.employeeId, u);
+  const unlinked = users.filter((u) => !u.employeeId || !empIds.has(u.employeeId));
+
+  const roleBtn = (u: AppUser, isSelf: boolean) => (
+    <Button
+      variant="outline"
+      className="px-3 py-1.5 text-xs"
+      disabled={isSelf}
+      onClick={() => void setUserRole(u.uid, u.role === "admin" ? "member" : "admin")}
+    >
+      {u.role === "admin" ? "הסר אדמין" : "הפוך לאדמין"}
+    </Button>
+  );
+
   return (
     <div className="space-y-4">
       <SeedCard />
+
       <Card>
-        <SectionTitle hint={`${employees.filter((e) => e.active).length} פעילים`}>עובדים</SectionTitle>
+        <SectionTitle hint={`${employees.filter((e) => e.active).length} פעילים · ${users.length} חשבונות`}>
+          עובדים ומשתמשים
+        </SectionTitle>
         <p className="mb-3 text-sm text-[var(--color-ink-soft)]">
-          המייל משמש לשיוך אוטומטי בכניסה. הוסיפו עובד/ת חדש/ה עם המייל שלו/ה, או
-          לחצו על ✎ ליד עובד כדי לעדכן מייל.
+          הרשימה המלאה. כשמישהו נכנס עם גוגל הוא משויך אוטומטית לפי המייל ומופיע כאן
+          עם החשבון שלו. אפשר לערוך שם/מייל (✎), להפוך לאדמין ולהשבית.
         </p>
         <div className="mb-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
           <input
@@ -289,33 +222,115 @@ function EmployeesTab() {
           />
           <Button onClick={add}>הוספה</Button>
         </div>
-        {employees.map((e) => (
-          <Row key={e.id}>
-            <span className="min-w-0 flex-1 basis-40">
-              <InlineEdit value={e.name} onSave={(v) => void updateEmployee(e.id, { name: v })} />
-              {!e.active && <Badge tone="neutral">לא פעיל</Badge>}
-            </span>
-            <span className="text-xs text-[var(--color-ink-soft)]" dir="ltr">
-              <InlineEdit
-                value={e.email ?? ""}
-                onSave={(v) => void updateEmployee(e.id, { email: v.toLowerCase() })}
-              />
-            </span>
-            <Link to={`/employee/${e.id}`}>
-              <Button variant="outline" className="px-3 py-1.5 text-xs">
-                ה‑RTMים
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              className="px-3 py-1.5 text-xs"
-              onClick={() => void setEmployeeActive(e.id, !e.active)}
-            >
-              {e.active ? "השבתה" : "הפעלה מחדש"}
-            </Button>
-          </Row>
-        ))}
+
+        {employees.map((e) => {
+          const acct = acctByEmp.get(e.id);
+          const isSelf = acct?.uid === appUser?.uid;
+          return (
+            <Row key={e.id}>
+              <span className="min-w-0 flex-1 basis-40">
+                <InlineEdit value={e.name} onSave={(v) => void updateEmployee(e.id, { name: v })} />
+                {!e.active && <Badge tone="neutral">לא פעיל</Badge>}
+                {acct ? (
+                  acct.role === "admin" ? (
+                    <Badge tone="accent">אדמין</Badge>
+                  ) : (
+                    <Badge tone="green">מחובר/ת</Badge>
+                  )
+                ) : (
+                  <Badge tone="neutral">טרם נכנס/ה</Badge>
+                )}
+                {isSelf && <span className="ms-1 text-xs text-[var(--color-ink-soft)]">(את/ה)</span>}
+              </span>
+              <span className="text-xs text-[var(--color-ink-soft)]" dir="ltr">
+                <InlineEdit
+                  value={e.email ?? ""}
+                  onSave={(v) => void updateEmployee(e.id, { email: v.toLowerCase() })}
+                />
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link to={`/employee/${e.id}`}>
+                  <Button variant="outline" className="px-3 py-1.5 text-xs">
+                    ה‑RTMים
+                  </Button>
+                </Link>
+                {acct && roleBtn(acct, isSelf)}
+                <Button
+                  variant="ghost"
+                  className="px-3 py-1.5 text-xs"
+                  onClick={() => void setEmployeeActive(e.id, !e.active)}
+                >
+                  {e.active ? "השבתה" : "הפעלה מחדש"}
+                </Button>
+                {acct && (
+                  <Button
+                    variant="danger"
+                    className="px-3 py-1.5 text-xs"
+                    disabled={isSelf}
+                    onClick={() => {
+                      if (confirm(`להסיר את חשבון הכניסה של ${acct.email}? (העובד יישאר)`))
+                        void deleteUser(acct.uid);
+                    }}
+                  >
+                    הסר חשבון
+                  </Button>
+                )}
+              </div>
+            </Row>
+          );
+        })}
       </Card>
+
+      {unlinked.length > 0 && (
+        <Card>
+          <SectionTitle hint={`${unlinked.length}`}>חשבונות לא משויכים</SectionTitle>
+          <p className="mb-3 text-sm text-[var(--color-ink-soft)]">
+            חשבונות גוגל שנכנסו אך לא שויכו לעובד (המייל לא תאם). שייכו אותם לעובד או הסירו.
+          </p>
+          {unlinked.map((u) => {
+            const isSelf = u.uid === appUser?.uid;
+            return (
+              <Row key={u.uid}>
+                <div className="min-w-0 flex-1 basis-48">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <span className="truncate">{u.displayName}</span>
+                    {u.role === "admin" && <Badge tone="accent">אדמין</Badge>}
+                    {isSelf && <span className="text-xs text-[var(--color-ink-soft)]">(את/ה)</span>}
+                  </div>
+                  <div className="truncate text-xs text-[var(--color-ink-soft)]" dir="ltr">
+                    {u.email}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    className={cn(selectInline, "w-44")}
+                    value=""
+                    onChange={(e) => e.target.value && void setUserEmployee(u.uid, e.target.value)}
+                  >
+                    <option value="">— שייך/י לעובד —</option>
+                    {employees.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.name}
+                      </option>
+                    ))}
+                  </select>
+                  {roleBtn(u, isSelf)}
+                  <Button
+                    variant="danger"
+                    className="px-3 py-1.5 text-xs"
+                    disabled={isSelf}
+                    onClick={() => {
+                      if (confirm(`להסיר את ${u.email}?`)) void deleteUser(u.uid);
+                    }}
+                  >
+                    הסרה
+                  </Button>
+                </div>
+              </Row>
+            );
+          })}
+        </Card>
+      )}
     </div>
   );
 }

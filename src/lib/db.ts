@@ -58,7 +58,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   content: DEFAULT_CONTENT,
   maxIdeaOwners: 2,
   collageCols: 4,
-  collageRows: 3,
+  collageRows: 4,
 };
 
 type Snap = QueryDocumentSnapshot<DocumentData>;

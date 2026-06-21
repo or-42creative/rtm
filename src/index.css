@@ -49,25 +49,6 @@ body {
   box-sizing: border-box;
 }
 
-/* "Wall of fame" masonry — admin sets the desktop column count via
-   --collage-cols; mobile/tablet stay readable at 2/3. */
-.collage {
-  column-count: 2;
-  column-gap: 0.75rem;
-}
-.collage > * {
-  margin-bottom: 0.75rem;
-}
-@media (min-width: 640px) {
-  .collage {
-    column-count: 3;
-  }
-}
-@media (min-width: 1024px) {
-  .collage {
-    column-count: var(--collage-cols, 4);
-  }
-}
 
 /* ------------------------------- animations -------------------------------- */
 

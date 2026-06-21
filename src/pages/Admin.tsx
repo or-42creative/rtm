@@ -462,6 +462,7 @@ function RtmsTab() {
             <RtmCard
               key={r.id}
               rtm={r}
+              showUploader
               editHref={`/edit/${r.id}`}
               onDisqualify={(rtm) => {
                 const reason = window.prompt("מה סיבת הפסילה?", rtm.dqReason ?? "");

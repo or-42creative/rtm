@@ -18,6 +18,7 @@ export function RtmCard({
   rtm,
   onDelete,
   editHref,
+  showUploader,
   onAppeal,
   onDisqualify,
   onReinstate,
@@ -26,6 +27,8 @@ export function RtmCard({
   rtm: Rtm;
   onDelete?: (rtm: Rtm) => void;
   editHref?: string;
+  /** Show who actually uploaded the RTM (the submitter), not just the credit. */
+  showUploader?: boolean;
   /** Owner action (their own disqualified RTM). */
   onAppeal?: (rtm: Rtm) => void;
   /** Admin actions. */
@@ -63,6 +66,15 @@ export function RtmCard({
           ))}
           <Badge tone="neutral">🎯 {employeeName(rtm.accountManagerId)}</Badge>
         </div>
+
+        {showUploader && (
+          <p className="text-xs text-[var(--color-ink-soft)]">
+            ⬆️ הועלה ע״י:{" "}
+            <b className="text-[var(--color-ink)]">
+              {rtm.createdByEmployeeId ? employeeName(rtm.createdByEmployeeId) : "לא משויך"}
+            </b>
+          </p>
+        )}
 
         {dq && (
           <div className="rounded-xl bg-red-50 p-3 text-sm">

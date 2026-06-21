@@ -91,6 +91,7 @@ export function MyRtmsPage() {
                     <RtmCard
                       key={r.id}
                       rtm={r}
+                      showUploader
                       editHref={mine && !dq ? `/edit/${r.id}` : undefined}
                       onAppeal={mine && dq ? appeal : undefined}
                     />

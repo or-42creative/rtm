@@ -14,6 +14,8 @@ import { DashboardPage } from "@/pages/Dashboard";
 import { SubmitRtmPage } from "@/pages/SubmitRtm";
 import { MyRtmsPage } from "@/pages/MyRtms";
 import { RtmDetailPage } from "@/pages/RtmDetail";
+import { EmployeeDetailPage } from "@/pages/EmployeeDetail";
+import { ClientDetailPage } from "@/pages/ClientDetail";
 import { RulesPage } from "@/pages/Rules";
 import { AdminPage } from "@/pages/Admin";
 
@@ -96,6 +98,8 @@ function Shell({ isAdmin }: { isAdmin: boolean }) {
         <Route path="/edit/:id" element={<SubmitRtmPage />} />
         <Route path="/me" element={<MyRtmsPage />} />
         <Route path="/rtm/:id" element={<RtmDetailPage />} />
+        <Route path="/employee/:id" element={<EmployeeDetailPage />} />
+        <Route path="/client/:id" element={<ClientDetailPage />} />
         <Route path="/rules" element={<RulesPage />} />
         {isAdmin && <Route path="/admin" element={<AdminPage />} />}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -165,20 +165,33 @@ export function RtmDetailPage() {
 
       <Card className="space-y-2.5 text-sm">
         <Row label="לקוח">
-          <b>{rtm.clientName}</b>
+          <Link to={`/client/${rtm.clientId}`} className="font-black hover:underline">
+            {rtm.clientName}
+          </Link>
         </Row>
         <Row label="תאריך">{fmtDate(rtm.date?.toDate?.())}</Row>
         <Row label="הועלה ע״י">
-          <b>{rtm.createdByEmployeeId ? employeeName(rtm.createdByEmployeeId) : "לא משויך"}</b>
+          {rtm.createdByEmployeeId ? (
+            <Link
+              to={`/employee/${rtm.createdByEmployeeId}`}
+              className="font-black hover:underline"
+            >
+              {employeeName(rtm.createdByEmployeeId)}
+            </Link>
+          ) : (
+            <b>לא משויך</b>
+          )}
         </Row>
         <Row label="קרדיט">
           <span className="flex flex-wrap gap-1.5">
             {rtm.ideaOwnerIds.map((oid) => (
-              <Badge key={oid} tone="accent">
-                💡 {employeeName(oid)}
-              </Badge>
+              <Link key={oid} to={`/employee/${oid}`}>
+                <Badge tone="accent">💡 {employeeName(oid)}</Badge>
+              </Link>
             ))}
-            <Badge tone="neutral">🎯 {employeeName(rtm.accountManagerId)}</Badge>
+            <Link to={`/employee/${rtm.accountManagerId}`}>
+              <Badge tone="neutral">🎯 {employeeName(rtm.accountManagerId)}</Badge>
+            </Link>
           </span>
         </Row>
         <Row label="לייקים">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 import { useAuth } from "@/lib/auth";
 import { useAppData } from "@/lib/appData";
@@ -189,9 +190,13 @@ function UsersTab() {
               <Row key={u.uid}>
                 <div className="min-w-0 flex-1 basis-48">
                   <div className="flex items-center gap-1.5 font-bold">
-                    <span className="truncate">
-                      {u.employeeId ? employeeName(u.employeeId) : u.displayName}
-                    </span>
+                    {u.employeeId ? (
+                      <Link to={`/employee/${u.employeeId}`} className="truncate hover:underline">
+                        {employeeName(u.employeeId)}
+                      </Link>
+                    ) : (
+                      <span className="truncate">{u.displayName}</span>
+                    )}
                     {u.role === "admin" && <Badge tone="accent">אדמין</Badge>}
                     {isSelf && <span className="text-xs text-[var(--color-ink-soft)]">(את/ה)</span>}
                   </div>
@@ -296,6 +301,11 @@ function EmployeesTab() {
                 onSave={(v) => void updateEmployee(e.id, { email: v.toLowerCase() })}
               />
             </span>
+            <Link to={`/employee/${e.id}`}>
+              <Button variant="outline" className="px-3 py-1.5 text-xs">
+                ה‑RTMים
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               className="px-3 py-1.5 text-xs"
@@ -420,6 +430,11 @@ function ClientsTab() {
               )}
             </select>
           </label>
+          <Link to={`/client/${c.id}`}>
+            <Button variant="outline" className="px-3 py-1.5 text-xs">
+              ה‑RTMים
+            </Button>
+          </Link>
           <Button
             variant="ghost"
             className="px-3 py-1.5 text-xs"

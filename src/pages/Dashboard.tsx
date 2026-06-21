@@ -104,14 +104,26 @@ export function DashboardPage() {
             <p className="text-lg font-black">{prize || t("dash.prizeEmpty")}</p>
           </div>
         </Card>
-        <Card className="flex items-center gap-4">
-          <span className="text-4xl">🏅</span>
-          <div className="min-w-0">
-            <p className="text-xs font-black text-[var(--color-ink-soft)]">{t("dash.topClient")}</p>
-            <p className="truncate text-lg font-black">{scores.topClient ? scores.topClient.name : "—"}</p>
-            {scores.topClient && <Badge tone="accent">{scores.topClient.count} RTM</Badge>}
-          </div>
-        </Card>
+        {scores.topClient ? (
+          <Link to={`/client/${scores.topClient.clientId}`} className="block">
+            <Card className="flex h-full items-center gap-4 transition hover:shadow-md">
+              <span className="text-4xl">🏅</span>
+              <div className="min-w-0">
+                <p className="text-xs font-black text-[var(--color-ink-soft)]">{t("dash.topClient")}</p>
+                <p className="truncate text-lg font-black">{scores.topClient.name}</p>
+                <Badge tone="accent">{scores.topClient.count} RTM</Badge>
+              </div>
+            </Card>
+          </Link>
+        ) : (
+          <Card className="flex items-center gap-4">
+            <span className="text-4xl">🏅</span>
+            <div className="min-w-0">
+              <p className="text-xs font-black text-[var(--color-ink-soft)]">{t("dash.topClient")}</p>
+              <p className="text-lg font-black">—</p>
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* Current standings */}
@@ -183,17 +195,22 @@ export function DashboardPage() {
 function LovedRow({ rtm, rank }: { rtm: Rtm; rank: number }) {
   const medals = ["🥇", "🥈", "🥉"];
   return (
-    <li className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-[var(--color-cloud)]">
-      <span className="w-6 text-center text-lg font-black">
-        {medals[rank] ?? <span className="text-sm text-[var(--color-ink-soft)]">{rank + 1}</span>}
-      </span>
-      <span className="me-auto min-w-0">
-        <span className="block truncate font-bold">{rtm.name}</span>
-        <span className="block truncate text-xs text-[var(--color-ink-soft)]">{rtm.clientName}</span>
-      </span>
-      <span className="shrink-0 font-black text-[var(--c-pink)]">
-        ❤️ {countLikes(rtm.reactions)}
-      </span>
+    <li>
+      <Link
+        to={`/rtm/${rtm.id}`}
+        className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-[var(--color-cloud)]"
+      >
+        <span className="w-6 text-center text-lg font-black">
+          {medals[rank] ?? <span className="text-sm text-[var(--color-ink-soft)]">{rank + 1}</span>}
+        </span>
+        <span className="me-auto min-w-0">
+          <span className="block truncate font-bold">{rtm.name}</span>
+          <span className="block truncate text-xs text-[var(--color-ink-soft)]">{rtm.clientName}</span>
+        </span>
+        <span className="shrink-0 font-black text-[var(--c-pink)]">
+          ❤️ {countLikes(rtm.reactions)}
+        </span>
+      </Link>
     </li>
   );
 }
@@ -243,8 +260,8 @@ function WinnerCard({
   subtitle: string;
   row: ScoreRow | null;
 }) {
-  return (
-    <Card className="flex items-center gap-4 border-[var(--color-gold)]/50 bg-gradient-to-l from-[var(--color-gold)]/15 to-transparent">
+  const card = (
+    <Card className="flex h-full items-center gap-4 border-[var(--color-gold)]/50 bg-gradient-to-l from-[var(--color-gold)]/15 to-transparent transition hover:shadow-md">
       <div className="grid size-14 shrink-0 place-items-center rounded-full bg-[var(--color-gold)] text-3xl animate-float">
         🏆
       </div>
@@ -256,6 +273,13 @@ function WinnerCard({
         </p>
       </div>
     </Card>
+  );
+  return row ? (
+    <Link to={`/employee/${row.employeeId}`} className="block">
+      {card}
+    </Link>
+  ) : (
+    card
   );
 }
 
@@ -279,21 +303,23 @@ function Leaderboard({
       ) : (
         <ol className="space-y-1">
           {rows.map((r, i) => (
-            <li
-              key={r.employeeId}
-              className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-[var(--color-cloud)]"
-            >
-              <span className="w-6 text-center text-lg font-black">
-                {medals[i] ?? (
-                  <span className="text-sm text-[var(--color-ink-soft)]">{i + 1}</span>
-                )}
-              </span>
-              <Avatar name={r.name} size={30} />
-              <span className="me-auto font-bold">{r.name}</span>
-              <span className="font-black">
-                {r.count}{" "}
-                <span className="text-xs font-bold text-[var(--color-ink-soft)]">{unit}</span>
-              </span>
+            <li key={r.employeeId}>
+              <Link
+                to={`/employee/${r.employeeId}`}
+                className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-[var(--color-cloud)]"
+              >
+                <span className="w-6 text-center text-lg font-black">
+                  {medals[i] ?? (
+                    <span className="text-sm text-[var(--color-ink-soft)]">{i + 1}</span>
+                  )}
+                </span>
+                <Avatar name={r.name} size={30} />
+                <span className="me-auto font-bold">{r.name}</span>
+                <span className="font-black">
+                  {r.count}{" "}
+                  <span className="text-xs font-bold text-[var(--color-ink-soft)]">{unit}</span>
+                </span>
+              </Link>
             </li>
           ))}
         </ol>

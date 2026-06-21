@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import type { MouseEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import { useAppData } from "@/lib/appData";
 import type { Rtm } from "@/types";
@@ -10,14 +11,24 @@ const fmtDate = (rtm: Rtm): string => {
   return d.toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" });
 };
 
-/** A clickable RTM summary — opens the full item page (/rtm/:id). */
+const stop = (e: MouseEvent) => e.stopPropagation();
+
+/** A clickable RTM summary — the card opens the item page; names inside link to
+ *  the employee / client pages. */
 export function RtmCard({ rtm, showUploader }: { rtm: Rtm; showUploader?: boolean }) {
   const { employeeName } = useAppData();
+  const navigate = useNavigate();
   const dq = rtm.status === "disqualified";
   const likes = rtm.reactions ? Object.keys(rtm.reactions).length : 0;
 
   return (
-    <Link to={`/rtm/${rtm.id}`} className="block">
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => navigate(`/rtm/${rtm.id}`)}
+      onKeyDown={(e) => e.key === "Enter" && navigate(`/rtm/${rtm.id}`)}
+      className="cursor-pointer"
+    >
       <Card
         className={cn(
           "overflow-hidden p-0 transition hover:-translate-y-0.5 hover:shadow-md",
@@ -35,15 +46,24 @@ export function RtmCard({ rtm, showUploader }: { rtm: Rtm; showUploader?: boolea
             </span>
           </div>
           <div className="text-sm text-[var(--color-ink-soft)]">
-            לקוח: <b className="text-[var(--color-ink)]">{rtm.clientName}</b>
+            לקוח:{" "}
+            <Link
+              to={`/client/${rtm.clientId}`}
+              onClick={stop}
+              className="font-black text-[var(--color-ink)] hover:underline"
+            >
+              {rtm.clientName}
+            </Link>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {rtm.ideaOwnerIds.map((id) => (
-              <Badge key={id} tone="accent">
-                💡 {employeeName(id)}
-              </Badge>
+              <Link key={id} to={`/employee/${id}`} onClick={stop}>
+                <Badge tone="accent">💡 {employeeName(id)}</Badge>
+              </Link>
             ))}
-            <Badge tone="neutral">🎯 {employeeName(rtm.accountManagerId)}</Badge>
+            <Link to={`/employee/${rtm.accountManagerId}`} onClick={stop}>
+              <Badge tone="neutral">🎯 {employeeName(rtm.accountManagerId)}</Badge>
+            </Link>
             {likes > 0 && (
               <span className="text-sm font-black text-[var(--c-pink)]">❤️ {likes}</span>
             )}
@@ -56,13 +76,21 @@ export function RtmCard({ rtm, showUploader }: { rtm: Rtm; showUploader?: boolea
           {showUploader && (
             <p className="text-xs text-[var(--color-ink-soft)]">
               ⬆️ הועלה ע״י:{" "}
-              <b className="text-[var(--color-ink)]">
-                {rtm.createdByEmployeeId ? employeeName(rtm.createdByEmployeeId) : "לא משויך"}
-              </b>
+              {rtm.createdByEmployeeId ? (
+                <Link
+                  to={`/employee/${rtm.createdByEmployeeId}`}
+                  onClick={stop}
+                  className="font-black text-[var(--color-ink)] hover:underline"
+                >
+                  {employeeName(rtm.createdByEmployeeId)}
+                </Link>
+              ) : (
+                <b className="text-[var(--color-ink)]">לא משויך</b>
+              )}
             </p>
           )}
         </div>
       </Card>
-    </Link>
+    </div>
   );
 }

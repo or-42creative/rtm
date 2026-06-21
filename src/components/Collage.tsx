@@ -102,7 +102,10 @@ function CollageTile({ rtm, index }: { rtm: Rtm; index: number }) {
   return (
     <Link
       to={`/rtm/${rtm.id}`}
-      className="group relative block aspect-square overflow-hidden rounded-2xl border border-[var(--color-line)] bg-white shadow-sm transition duration-300 animate-fade-up hover:-translate-y-1 hover:shadow-xl"
+      className={cn(
+        "group relative block aspect-square overflow-hidden rounded-2xl border border-[var(--color-line)] bg-gradient-to-br shadow-sm transition duration-300 animate-fade-up hover:-translate-y-1 hover:shadow-xl",
+        grad,
+      )}
       style={{ animationDelay: `${Math.min(index, 15) * 35}ms` }}
     >
       {hasImage ? (
@@ -110,7 +113,7 @@ function CollageTile({ rtm, index }: { rtm: Rtm; index: number }) {
           src={rtm.mediaUrl!}
           alt={rtm.name}
           loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          className="absolute inset-0 h-full w-full object-contain p-1.5 transition duration-500 group-hover:scale-105"
         />
       ) : hasVideo ? (
         <>
@@ -119,7 +122,7 @@ function CollageTile({ rtm, index }: { rtm: Rtm; index: number }) {
             muted
             playsInline
             preload="metadata"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain p-1.5"
           />
           <span className="absolute inset-0 grid place-items-center text-5xl text-white/90 drop-shadow-lg transition group-hover:scale-110">
             ▶
@@ -139,7 +142,7 @@ function CollageTile({ rtm, index }: { rtm: Rtm; index: number }) {
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-2.5 pt-8">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent p-2.5 pt-8 opacity-0 transition duration-200 group-hover:opacity-100">
         <p className="truncate text-xs font-black text-white">{rtm.name}</p>
         <p className="truncate text-[10px] font-bold text-white/80">{rtm.clientName}</p>
       </div>

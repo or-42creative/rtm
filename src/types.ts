@@ -60,6 +60,9 @@ export type AppealStatus = "none" | "pending" | "accepted" | "rejected";
 
 /** A "יש לי טענה" complaint raised by any user about an RTM. */
 export type ClaimCategory = "not_rtm" | "wrong_credit" | "other";
+/** How an admin closed a claim: disqualified the RTM / rejected the claim /
+ *  kept the RTM as-is. */
+export type ClaimResolution = "disqualified" | "rejected" | "kept";
 export interface Claim {
   id: string;
   rtmId: string;
@@ -69,6 +72,8 @@ export interface Claim {
   category: ClaimCategory;
   text: string;
   status: "open" | "handled";
+  resolution?: ClaimResolution;
+  adminNote?: string;
   createdAt: Timestamp;
 }
 

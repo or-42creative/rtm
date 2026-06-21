@@ -31,6 +31,7 @@ import type {
   AppSettings,
   Claim,
   ClaimCategory,
+  ClaimResolution,
   Client,
   Employee,
   MediaType,
@@ -239,8 +240,16 @@ export const subscribeClaims = (cb: (rows: Claim[]) => void) =>
     cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }) as Claim)),
   );
 
-export const setClaimHandled = (id: string) =>
-  updateDoc(doc(db, COL.claims, id), { status: "handled" });
+export const resolveClaim = (
+  id: string,
+  resolution: ClaimResolution,
+  adminNote: string,
+) =>
+  updateDoc(doc(db, COL.claims, id), {
+    status: "handled",
+    resolution,
+    adminNote: adminNote.trim(),
+  });
 
 /* ----------------------------- notifications --------------------------------- */
 

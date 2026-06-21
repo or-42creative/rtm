@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/lib/auth";
-import { markNotificationRead, subscribeNotifications } from "@/lib/db";
+import { ADMINS, markNotificationRead, subscribeNotifications } from "@/lib/db";
 import type { AppNotification } from "@/types";
 import { cn } from "./ui";
 
@@ -17,11 +18,24 @@ const fmt = (ts: AppNotification["createdAt"]): string => {
 
 export function NotificationsBell() {
   const { appUser } = useAuth();
+  const navigate = useNavigate();
   const [items, setItems] = useState<AppNotification[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const uid = appUser?.uid ?? "";
   const isAdmin = appUser?.role === "admin";
+
+  const go = (n: AppNotification) => {
+    setOpen(false);
+    void markNotificationRead(n.id, uid);
+    const dest =
+      n.forUid === ADMINS && n.type === "claim"
+        ? "/admin?tab=claims"
+        : n.rtmId
+          ? `/rtm/${n.rtmId}`
+          : "/";
+    navigate(dest);
+  };
 
   useEffect(() => {
     if (!uid) return;
@@ -73,16 +87,17 @@ export function NotificationsBell() {
               items.map((n) => {
                 const isUnread = !(n.readBy ?? []).includes(uid);
                 return (
-                  <div
+                  <button
                     key={n.id}
+                    onClick={() => go(n)}
                     className={cn(
-                      "border-b border-[var(--color-line)] px-4 py-3 text-sm last:border-0",
+                      "block w-full border-b border-[var(--color-line)] px-4 py-3 text-start text-sm transition last:border-0 hover:bg-[var(--color-cloud)]",
                       isUnread && "bg-[var(--color-accent-soft)]",
                     )}
                   >
                     <p className="font-bold leading-snug">{n.text}</p>
                     <p className="mt-0.5 text-xs text-[var(--color-ink-soft)]">{fmt(n.createdAt)}</p>
-                  </div>
+                  </button>
                 );
               })
             )}

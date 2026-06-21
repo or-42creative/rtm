@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { useAuth } from "@/lib/auth";
 import { useAppData } from "@/lib/appData";
 import {
   addClient,
   addEmployee,
+  createNotification,
   deleteUser,
-  setClaimHandled,
+  disqualifyRtm,
+  resolveClaim,
   subscribeClaims,
   DEFAULT_SETTINGS,
   saveSettings,
@@ -62,7 +64,18 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export function AdminPage() {
-  const [tab, setTab] = useState<Tab>("employees");
+  const [params] = useSearchParams();
+  const initial = params.get("tab");
+  const [tab, setTab] = useState<Tab>(
+    TABS.some((t) => t.id === initial) ? (initial as Tab) : "employees",
+  );
+
+  // Switch tab when arriving via ?tab=… (e.g. from a notification) even if the
+  // admin page is already mounted.
+  useEffect(() => {
+    const t = params.get("tab");
+    if (t && TABS.some((x) => x.id === t)) setTab(t as Tab);
+  }, [params]);
   return (
     <div>
       <h1 className="text-2xl font-black">ניהול</h1>
@@ -500,35 +513,112 @@ const CLAIM_LABEL: Record<Claim["category"], string> = {
   wrong_credit: "קרדיט לא נכון",
   other: "אחר",
 };
+const RES_LABEL: Record<NonNullable<Claim["resolution"]>, string> = {
+  disqualified: "נפסל ⛔",
+  rejected: "נדחתה",
+  kept: "הושאר ✓",
+};
 
 function ClaimsTab() {
-  const { employeeName } = useAppData();
+  const { employeeName, rtms } = useAppData();
   const [claims, setClaims] = useState<Claim[]>([]);
+  const [notes, setNotes] = useState<Record<string, string>>({});
   useEffect(() => subscribeClaims(setClaims), []);
 
   const open = claims.filter((c) => c.status === "open");
   const handled = claims.filter((c) => c.status === "handled");
+  const noteOf = (c: Claim) => (notes[c.id] ?? "").trim();
 
-  const Row = ({ c }: { c: Claim }) => (
-    <Card className={cn("space-y-1", c.status === "handled" && "opacity-60")}>
+  const accept = async (c: Claim) => {
+    const reason = noteOf(c) || c.text;
+    const rtm = rtms.find((r) => r.id === c.rtmId);
+    await disqualifyRtm(c.rtmId, reason);
+    if (rtm)
+      await createNotification({
+        forUid: rtm.createdByUid,
+        type: "disqualified",
+        text: `ה‑RTM "${c.rtmName}" נפסל בעקבות טענה. סיבה: ${reason}`,
+        rtmId: c.rtmId,
+      });
+    await createNotification({
+      forUid: c.byUid,
+      type: "claim",
+      text: `הטענה שלך על "${c.rtmName}" התקבלה — ה‑RTM נפסל.`,
+      rtmId: c.rtmId,
+    });
+    await resolveClaim(c.id, "disqualified", noteOf(c));
+  };
+
+  const reject = async (c: Claim) => {
+    await createNotification({
+      forUid: c.byUid,
+      type: "claim",
+      text: `הטענה שלך על "${c.rtmName}" נדחתה.${noteOf(c) ? ` (${noteOf(c)})` : ""}`,
+      rtmId: c.rtmId,
+    });
+    await resolveClaim(c.id, "rejected", noteOf(c));
+  };
+
+  const keep = async (c: Claim) => {
+    await createNotification({
+      forUid: c.byUid,
+      type: "claim",
+      text: `הטענה שלך על "${c.rtmName}" נבדקה — ה‑RTM נשאר בתחרות.`,
+      rtmId: c.rtmId,
+    });
+    await resolveClaim(c.id, "kept", noteOf(c));
+  };
+
+  const openCard = (c: Claim) => (
+    <Card key={c.id} className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="font-black">{c.rtmName}</span>
+        <Link to={`/rtm/${c.rtmId}`} className="font-black hover:underline">
+          {c.rtmName}
+        </Link>
         <Badge tone="accent">{CLAIM_LABEL[c.category]}</Badge>
       </div>
       <p className="text-sm text-[var(--color-ink-soft)]">{c.text}</p>
       <p className="text-xs text-[var(--color-ink-soft)]">
         מאת: {c.byEmployeeId ? employeeName(c.byEmployeeId) : "—"}
       </p>
-      {c.status === "open" && (
-        <div className="pt-1">
-          <Button
-            variant="outline"
-            className="px-3 py-1.5 text-xs"
-            onClick={() => void setClaimHandled(c.id)}
-          >
-            סימון כטופל
-          </Button>
-        </div>
+      <textarea
+        className={cn(inputClass, "min-h-16 text-sm")}
+        placeholder="הערה / סיבת ההחלטה (אופציונלי)…"
+        value={notes[c.id] ?? ""}
+        onChange={(e) => setNotes((p) => ({ ...p, [c.id]: e.target.value }))}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button variant="danger" className="px-3 py-1.5 text-xs" onClick={() => void accept(c)}>
+          קבל ופסול
+        </Button>
+        <Button variant="outline" className="px-3 py-1.5 text-xs" onClick={() => void reject(c)}>
+          דחה טענה
+        </Button>
+        <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={() => void keep(c)}>
+          השאר כמו שהוא
+        </Button>
+      </div>
+    </Card>
+  );
+
+  const handledCard = (c: Claim) => (
+    <Card key={c.id} className="space-y-1 opacity-70">
+      <div className="flex items-center justify-between gap-2">
+        <Link to={`/rtm/${c.rtmId}`} className="font-black hover:underline">
+          {c.rtmName}
+        </Link>
+        {c.resolution && (
+          <Badge tone={c.resolution === "disqualified" ? "accent" : "neutral"}>
+            {RES_LABEL[c.resolution]}
+          </Badge>
+        )}
+      </div>
+      <p className="text-sm text-[var(--color-ink-soft)]">{c.text}</p>
+      <p className="text-xs text-[var(--color-ink-soft)]">
+        מאת: {c.byEmployeeId ? employeeName(c.byEmployeeId) : "—"}
+      </p>
+      {c.adminNote && (
+        <p className="text-xs text-[var(--color-ink)]">הערת מנהל: {c.adminNote}</p>
       )}
     </Card>
   );
@@ -538,16 +628,14 @@ function ClaimsTab() {
       <div>
         <SectionTitle hint={`${open.length} פתוחות`}>טענות שהוגשו</SectionTitle>
         <p className="mb-3 text-sm text-[var(--color-ink-soft)]">
-          טענות שמשתמשים הגישו על RTMים ("יש לי טענה"). לפסילה בפועל — עברו לטאב
-          RTMים.
+          טענות שמשתמשים הגישו על RTMים ("יש לי טענה"). אפשר לקבל ולפסול, לדחות, או
+          להשאיר — ולהוסיף הערה. המגיש/ה יקבל/תקבל התראה על ההחלטה.
         </p>
         {open.length === 0 ? (
           <EmptyState title="אין טענות פתוחות 🎉" />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {open.map((c) => (
-              <Row key={c.id} c={c} />
-            ))}
+            {open.map((c) => openCard(c))}
           </div>
         )}
       </div>
@@ -556,9 +644,7 @@ function ClaimsTab() {
         <div>
           <SectionTitle hint={`${handled.length}`}>טופלו</SectionTitle>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {handled.map((c) => (
-              <Row key={c.id} c={c} />
-            ))}
+            {handled.map((c) => handledCard(c))}
           </div>
         </div>
       )}

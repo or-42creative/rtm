@@ -45,9 +45,6 @@ export function Layout({ children }: { children: ReactNode }) {
             <NavLink to="/rules" className={navClass}>
               {t("nav.rules")}
             </NavLink>
-            <NavLink to="/claim" className={navClass}>
-              {t("nav.claim")}
-            </NavLink>
             {isAdmin && (
               <NavLink to="/admin" className={navClass}>
                 {t("nav.admin")}

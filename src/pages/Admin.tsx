@@ -5,12 +5,7 @@ import { useAppData } from "@/lib/appData";
 import {
   addClient,
   addEmployee,
-  createNotification,
-  deleteRtm,
   deleteUser,
-  disqualifyRtm,
-  reinstateRtm,
-  resolveAppeal,
   setClaimHandled,
   subscribeClaims,
   DEFAULT_SETTINGS,
@@ -459,56 +454,7 @@ function RtmsTab() {
           <RtmFilterBar value={filter} onChange={setFilter} />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((r) => (
-            <RtmCard
-              key={r.id}
-              rtm={r}
-              showUploader
-              editHref={`/edit/${r.id}`}
-              onDisqualify={(rtm) => {
-                const reason = window.prompt("מה סיבת הפסילה?", rtm.dqReason ?? "");
-                if (reason && reason.trim()) {
-                  void disqualifyRtm(rtm.id, reason);
-                  void createNotification({
-                    forUid: rtm.createdByUid,
-                    type: "disqualified",
-                    text: `ה‑RTM "${rtm.name}" נפסל. סיבה: ${reason.trim()}`,
-                    rtmId: rtm.id,
-                  });
-                }
-              }}
-              onReinstate={(rtm) => {
-                if (confirm(`לבטל את הפסילה של "${rtm.name}"?`)) {
-                  void reinstateRtm(rtm.id);
-                  void createNotification({
-                    forUid: rtm.createdByUid,
-                    type: "reinstated",
-                    text: `ה‑RTM "${rtm.name}" הוחזר לתחרות.`,
-                    rtmId: rtm.id,
-                  });
-                }
-              }}
-              onResolveAppeal={(rtm, accept) => {
-                const q = accept
-                  ? `לקבל את הערעור ולהחזיר את "${rtm.name}" לתחרות?`
-                  : `לדחות את הערעור על "${rtm.name}"?`;
-                if (confirm(q)) {
-                  void resolveAppeal(rtm.id, accept);
-                  void createNotification({
-                    forUid: rtm.createdByUid,
-                    type: accept ? "appeal_accepted" : "appeal_rejected",
-                    text: accept
-                      ? `הערעור על "${rtm.name}" התקבל — ה‑RTM הוחזר לתחרות.`
-                      : `הערעור על "${rtm.name}" נדחה.`,
-                    rtmId: rtm.id,
-                  });
-                }
-              }}
-              onDelete={(rtm) => {
-                if (confirm(`למחוק את "${rtm.name}"? הנקודות שלו יוסרו מהדירוג.`)) {
-                  void deleteRtm(rtm.id);
-                }
-              }}
-            />
+            <RtmCard key={r.id} rtm={r} showUploader />
           ))}
           </div>
         </>

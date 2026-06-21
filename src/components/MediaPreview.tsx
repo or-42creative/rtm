@@ -60,6 +60,21 @@ export function MediaPreview({
   }
 
   if (link) {
+    const label = social?.label ?? "פוסט";
+    // Compact (inside a clickable card) → a non-anchor placeholder so it can be
+    // wrapped in a Link without nesting <a>.
+    if (compact) {
+      return (
+        <div
+          className={cn(
+            "flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[var(--c-purple)] to-[var(--c-pink)] px-4 py-8 text-sm font-black text-white",
+            className,
+          )}
+        >
+          {label}
+        </div>
+      );
+    }
     return (
       <a
         href={link}
@@ -71,7 +86,7 @@ export function MediaPreview({
         )}
       >
         <span>↗</span>
-        <span>צפייה ב{social?.label ?? "פוסט"}</span>
+        <span>צפייה ב{label}</span>
       </a>
     );
   }

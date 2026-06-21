@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { Link } from "react-router-dom";
 
 import { parseSocial, type Platform } from "@/lib/social";
 import type { Rtm } from "@/types";
@@ -64,10 +65,8 @@ function CollageTile({ rtm, index }: { rtm: Rtm; index: number }) {
   const hasVideo = rtm.mediaType === "video" && rtm.mediaUrl;
 
   return (
-    <a
-      href={rtm.link || "#"}
-      target="_blank"
-      rel="noreferrer"
+    <Link
+      to={`/rtm/${rtm.id}`}
       className="group relative block break-inside-avoid overflow-hidden rounded-2xl border border-[var(--color-line)] bg-white shadow-sm transition duration-300 animate-fade-up hover:-translate-y-1 hover:shadow-xl"
       style={{ animationDelay: `${Math.min(index, 14) * 45}ms` }}
     >
@@ -118,6 +117,6 @@ function CollageTile({ rtm, index }: { rtm: Rtm; index: number }) {
           className="rounded-full bg-white/90 px-2 py-1 shadow-sm backdrop-blur"
         />
       </div>
-    </a>
+    </Link>
   );
 }

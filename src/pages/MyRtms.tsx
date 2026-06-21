@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 
 import { useAuth } from "@/lib/auth";
 import { useAppData } from "@/lib/appData";
-import { appealRtm, notifyAdmins } from "@/lib/db";
 import { currentMonthKey, monthLabel } from "@/lib/scores";
 import type { Rtm } from "@/types";
 import { Button, Card, EmptyState } from "@/components/ui";
@@ -19,7 +18,6 @@ export function MyRtmsPage() {
   const { appUser } = useAuth();
   const { rtms, clients, t } = useAppData();
   const myId = appUser?.employeeId ?? "";
-  const uid = appUser?.uid;
   const [filter, setFilter] = useState<RtmFilter>(defaultRtmFilter);
 
   const { credited, thisMonthCount, totalIdea, amThisMonth, isAM } = useMemo(() => {
@@ -42,14 +40,6 @@ export function MyRtmsPage() {
   }, [rtms, clients, myId]);
 
   const list = useMemo(() => applyRtmFilter(credited, filter), [credited, filter]);
-
-  const appeal = (rtm: Rtm) => {
-    const reason = window.prompt("מה סיבת הערעור?", rtm.appealReason ?? "");
-    if (reason && reason.trim()) {
-      void appealRtm(rtm.id, reason);
-      void notifyAdmins("appeal", `ערעור חדש על "${rtm.name}".`, rtm.id);
-    }
-  };
 
   return (
     <div>
@@ -84,19 +74,9 @@ export function MyRtmsPage() {
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {list.map((r) => {
-                  const mine = r.createdByUid === uid;
-                  const dq = r.status === "disqualified";
-                  return (
-                    <RtmCard
-                      key={r.id}
-                      rtm={r}
-                      showUploader
-                      editHref={mine && !dq ? `/edit/${r.id}` : undefined}
-                      onAppeal={mine && dq ? appeal : undefined}
-                    />
-                  );
-                })}
+                {list.map((r) => (
+                  <RtmCard key={r.id} rtm={r} showUploader />
+                ))}
               </div>
             )}
           </>

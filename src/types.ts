@@ -58,6 +58,38 @@ export interface Rtm {
 export type RtmStatus = "active" | "disqualified";
 export type AppealStatus = "none" | "pending" | "accepted" | "rejected";
 
+/** A "יש לי טענה" complaint raised by any user about an RTM. */
+export type ClaimCategory = "not_rtm" | "wrong_credit" | "other";
+export interface Claim {
+  id: string;
+  rtmId: string;
+  rtmName: string;
+  byUid: string;
+  byEmployeeId?: string | null;
+  category: ClaimCategory;
+  text: string;
+  status: "open" | "handled";
+  createdAt: Timestamp;
+}
+
+export type NotificationType =
+  | "disqualified"
+  | "reinstated"
+  | "appeal"
+  | "appeal_accepted"
+  | "appeal_rejected"
+  | "claim";
+export interface AppNotification {
+  id: string;
+  /** A specific uid, or the sentinel "__admins__" (all admins). */
+  forUid: string;
+  type: NotificationType;
+  text: string;
+  rtmId?: string | null;
+  readBy?: string[];
+  createdAt: Timestamp;
+}
+
 export type UserRole = "admin" | "member";
 
 export interface AppUser {

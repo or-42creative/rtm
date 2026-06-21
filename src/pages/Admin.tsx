@@ -5,11 +5,14 @@ import { useAppData } from "@/lib/appData";
 import {
   addClient,
   addEmployee,
+  createNotification,
   deleteRtm,
   deleteUser,
   disqualifyRtm,
   reinstateRtm,
   resolveAppeal,
+  setClaimHandled,
+  subscribeClaims,
   DEFAULT_SETTINGS,
   saveSettings,
   seedData,
@@ -22,7 +25,7 @@ import {
   updateClient,
   updateEmployee,
 } from "@/lib/db";
-import type { AppSettings, AppUser, DigestFrequency } from "@/types";
+import type { AppSettings, AppUser, Claim, DigestFrequency } from "@/types";
 import { DEFAULT_RULES_MD } from "@/data/content";
 import {
   Badge,
@@ -36,6 +39,11 @@ import {
   selectInline,
 } from "@/components/ui";
 import { RtmCard } from "@/components/RtmCard";
+import {
+  RtmFilterBar,
+  applyRtmFilter,
+  defaultRtmFilter,
+} from "@/components/RtmFilters";
 import { DEFAULT_STRINGS, STRING_GROUPS } from "@/data/strings";
 
 type Tab =
@@ -43,6 +51,7 @@ type Tab =
   | "employees"
   | "clients"
   | "rtms"
+  | "claims"
   | "content"
   | "strings"
   | "settings";
@@ -52,6 +61,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "employees", label: "עובדים" },
   { id: "clients", label: "לקוחות" },
   { id: "rtms", label: "RTMים" },
+  { id: "claims", label: "טענות" },
   { id: "content", label: "תוכן" },
   { id: "strings", label: "טקסטים" },
   { id: "settings", label: "הגדרות" },
@@ -84,6 +94,7 @@ export function AdminPage() {
         {tab === "employees" && <EmployeesTab />}
         {tab === "clients" && <ClientsTab />}
         {tab === "rtms" && <RtmsTab />}
+        {tab === "claims" && <ClaimsTab />}
         {tab === "content" && <ContentTab />}
         {tab === "strings" && <StringsTab />}
         {tab === "settings" && <SettingsTab />}
@@ -436,30 +447,60 @@ function ClientsTab() {
 
 function RtmsTab() {
   const { rtms } = useAppData();
+  const [filter, setFilter] = useState(defaultRtmFilter);
+  const list = useMemo(() => applyRtmFilter(rtms, filter), [rtms, filter]);
   return (
     <div>
-      <SectionTitle hint={`${rtms.length} סה״כ`}>כל ה‑RTMים</SectionTitle>
+      <SectionTitle hint={`${list.length} מתוך ${rtms.length}`}>כל ה‑RTMים</SectionTitle>
       {rtms.length === 0 ? (
         <EmptyState title="עדיין אין RTMים" />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rtms.map((r) => (
+        <>
+          <RtmFilterBar value={filter} onChange={setFilter} />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {list.map((r) => (
             <RtmCard
               key={r.id}
               rtm={r}
               editHref={`/edit/${r.id}`}
               onDisqualify={(rtm) => {
                 const reason = window.prompt("מה סיבת הפסילה?", rtm.dqReason ?? "");
-                if (reason && reason.trim()) void disqualifyRtm(rtm.id, reason);
+                if (reason && reason.trim()) {
+                  void disqualifyRtm(rtm.id, reason);
+                  void createNotification({
+                    forUid: rtm.createdByUid,
+                    type: "disqualified",
+                    text: `ה‑RTM "${rtm.name}" נפסל. סיבה: ${reason.trim()}`,
+                    rtmId: rtm.id,
+                  });
+                }
               }}
               onReinstate={(rtm) => {
-                if (confirm(`לבטל את הפסילה של "${rtm.name}"?`)) void reinstateRtm(rtm.id);
+                if (confirm(`לבטל את הפסילה של "${rtm.name}"?`)) {
+                  void reinstateRtm(rtm.id);
+                  void createNotification({
+                    forUid: rtm.createdByUid,
+                    type: "reinstated",
+                    text: `ה‑RTM "${rtm.name}" הוחזר לתחרות.`,
+                    rtmId: rtm.id,
+                  });
+                }
               }}
               onResolveAppeal={(rtm, accept) => {
                 const q = accept
                   ? `לקבל את הערעור ולהחזיר את "${rtm.name}" לתחרות?`
                   : `לדחות את הערעור על "${rtm.name}"?`;
-                if (confirm(q)) void resolveAppeal(rtm.id, accept);
+                if (confirm(q)) {
+                  void resolveAppeal(rtm.id, accept);
+                  void createNotification({
+                    forUid: rtm.createdByUid,
+                    type: accept ? "appeal_accepted" : "appeal_rejected",
+                    text: accept
+                      ? `הערעור על "${rtm.name}" התקבל — ה‑RTM הוחזר לתחרות.`
+                      : `הערעור על "${rtm.name}" נדחה.`,
+                    rtmId: rtm.id,
+                  });
+                }
               }}
               onDelete={(rtm) => {
                 if (confirm(`למחוק את "${rtm.name}"? הנקודות שלו יוסרו מהדירוג.`)) {
@@ -468,6 +509,80 @@ function RtmsTab() {
               }}
             />
           ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ----------------------------------- claims ---------------------------------- */
+
+const CLAIM_LABEL: Record<Claim["category"], string> = {
+  not_rtm: "לא RTM אמיתי",
+  wrong_credit: "קרדיט לא נכון",
+  other: "אחר",
+};
+
+function ClaimsTab() {
+  const { employeeName } = useAppData();
+  const [claims, setClaims] = useState<Claim[]>([]);
+  useEffect(() => subscribeClaims(setClaims), []);
+
+  const open = claims.filter((c) => c.status === "open");
+  const handled = claims.filter((c) => c.status === "handled");
+
+  const Row = ({ c }: { c: Claim }) => (
+    <Card className={cn("space-y-1", c.status === "handled" && "opacity-60")}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-black">{c.rtmName}</span>
+        <Badge tone="accent">{CLAIM_LABEL[c.category]}</Badge>
+      </div>
+      <p className="text-sm text-[var(--color-ink-soft)]">{c.text}</p>
+      <p className="text-xs text-[var(--color-ink-soft)]">
+        מאת: {c.byEmployeeId ? employeeName(c.byEmployeeId) : "—"}
+      </p>
+      {c.status === "open" && (
+        <div className="pt-1">
+          <Button
+            variant="outline"
+            className="px-3 py-1.5 text-xs"
+            onClick={() => void setClaimHandled(c.id)}
+          >
+            סימון כטופל
+          </Button>
+        </div>
+      )}
+    </Card>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <SectionTitle hint={`${open.length} פתוחות`}>טענות שהוגשו</SectionTitle>
+        <p className="mb-3 text-sm text-[var(--color-ink-soft)]">
+          טענות שמשתמשים הגישו על RTMים ("יש לי טענה"). לפסילה בפועל — עברו לטאב
+          RTMים.
+        </p>
+        {open.length === 0 ? (
+          <EmptyState title="אין טענות פתוחות 🎉" />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {open.map((c) => (
+              <Row key={c.id} c={c} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {handled.length > 0 && (
+        <div>
+          <SectionTitle hint={`${handled.length}`}>טופלו</SectionTitle>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {handled.map((c) => (
+              <Row key={c.id} c={c} />
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ import { NotLinkedPage } from "@/pages/NotLinked";
 import { DashboardPage } from "@/pages/Dashboard";
 import { SubmitRtmPage } from "@/pages/SubmitRtm";
 import { MyRtmsPage } from "@/pages/MyRtms";
+import { ClaimPage } from "@/pages/Claim";
 import { RulesPage } from "@/pages/Rules";
 import { AdminPage } from "@/pages/Admin";
 
@@ -94,6 +95,7 @@ function Shell({ isAdmin }: { isAdmin: boolean }) {
         <Route path="/submit" element={<SubmitRtmPage />} />
         <Route path="/edit/:id" element={<SubmitRtmPage />} />
         <Route path="/me" element={<MyRtmsPage />} />
+        <Route path="/claim" element={<ClaimPage />} />
         <Route path="/rules" element={<RulesPage />} />
         {isAdmin && <Route path="/admin" element={<AdminPage />} />}
         <Route path="*" element={<Navigate to="/" replace />} />

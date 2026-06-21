@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useAppData } from "@/lib/appData";
 import { Logo } from "./Logo";
+import { NotificationsBell } from "./NotificationsBell";
 import { Avatar, Button, cn } from "./ui";
 
 function navClass({ isActive }: { isActive: boolean }) {
@@ -44,6 +45,9 @@ export function Layout({ children }: { children: ReactNode }) {
             <NavLink to="/rules" className={navClass}>
               {t("nav.rules")}
             </NavLink>
+            <NavLink to="/claim" className={navClass}>
+              {t("nav.claim")}
+            </NavLink>
             {isAdmin && (
               <NavLink to="/admin" className={navClass}>
                 {t("nav.admin")}
@@ -60,6 +64,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 </div>
               )}
             </div>
+            <NotificationsBell />
             <Avatar name={myName} src={appUser?.photoURL} />
             <Button variant="ghost" onClick={() => void signOut()} className="px-2">
               {t("nav.signOut")}

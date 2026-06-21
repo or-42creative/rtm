@@ -1,10 +1,12 @@
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteDoc,
   deleteField,
   doc,
   getDoc,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -12,6 +14,7 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
+  where,
   writeBatch,
   type DocumentData,
   type QueryDocumentSnapshot,
@@ -24,10 +27,14 @@ import { SEED_EMPLOYEES, SEED_CLIENTS } from "@/data/seed";
 import { DEFAULT_CONTENT } from "@/data/content";
 import type {
   AppUser,
+  AppNotification,
   AppSettings,
+  Claim,
+  ClaimCategory,
   Client,
   Employee,
   MediaType,
+  NotificationType,
   Rtm,
 } from "@/types";
 
@@ -37,7 +44,12 @@ export const COL = {
   rtms: "rtms",
   users: "users",
   settings: "settings",
+  claims: "claims",
+  notifications: "notifications",
 } as const;
+
+/** Notification target sentinel = "all admins". */
+export const ADMINS = "__admins__";
 
 const SETTINGS_DOC = "app";
 
@@ -202,6 +214,71 @@ export const appealRtm = (id: string, reason: string) =>
     appealStatus: "pending",
     appealReason: reason.trim(),
   });
+
+/* -------------------------------- claims ------------------------------------- */
+
+export interface NewClaim {
+  rtmId: string;
+  rtmName: string;
+  byUid: string;
+  byEmployeeId?: string | null;
+  category: ClaimCategory;
+  text: string;
+}
+
+export const createClaim = (c: NewClaim) =>
+  addDoc(collection(db, COL.claims), {
+    ...c,
+    byEmployeeId: c.byEmployeeId ?? null,
+    status: "open",
+    createdAt: serverTimestamp(),
+  });
+
+export const subscribeClaims = (cb: (rows: Claim[]) => void) =>
+  onSnapshot(query(collection(db, COL.claims), orderBy("createdAt", "desc")), (snap) =>
+    cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }) as Claim)),
+  );
+
+export const setClaimHandled = (id: string) =>
+  updateDoc(doc(db, COL.claims, id), { status: "handled" });
+
+/* ----------------------------- notifications --------------------------------- */
+
+export const createNotification = (n: {
+  forUid: string;
+  type: NotificationType;
+  text: string;
+  rtmId?: string | null;
+}) =>
+  addDoc(collection(db, COL.notifications), {
+    forUid: n.forUid,
+    type: n.type,
+    text: n.text,
+    rtmId: n.rtmId ?? null,
+    readBy: [],
+    createdAt: serverTimestamp(),
+  });
+
+export const notifyAdmins = (type: NotificationType, text: string, rtmId?: string) =>
+  createNotification({ forUid: ADMINS, type, text, rtmId });
+
+export const subscribeNotifications = (
+  uid: string,
+  isAdmin: boolean,
+  cb: (rows: AppNotification[]) => void,
+) =>
+  onSnapshot(
+    query(
+      collection(db, COL.notifications),
+      where("forUid", "in", isAdmin ? [uid, ADMINS] : [uid]),
+      orderBy("createdAt", "desc"),
+      limit(40),
+    ),
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }) as AppNotification)),
+  );
+
+export const markNotificationRead = (id: string, uid: string) =>
+  updateDoc(doc(db, COL.notifications, id), { readBy: arrayUnion(uid) });
 
 /** Toggle the current user's ❤️ on an RTM (stored as reactions[uid] = true). */
 export const toggleReaction = (rtmId: string, uid: string, liked: boolean) =>

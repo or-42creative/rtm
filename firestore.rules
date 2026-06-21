@@ -116,5 +116,23 @@ service cloud.firestore {
       allow read: if isOffice();
       allow write: if isAdmin();
     }
+
+    match /claims/{id} {
+      allow create: if isOffice() && request.resource.data.byUid == request.auth.uid;
+      allow read: if isAdmin() || (isOffice() && resource.data.byUid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /notifications/{id} {
+      allow read: if isOffice()
+        && (resource.data.forUid == request.auth.uid
+            || (resource.data.forUid == '__admins__' && isAdmin()));
+      // Any office user can create a notification (moderation / appeals / claims).
+      allow create: if isOffice();
+      // Recipients only mark themselves read (the readBy field).
+      allow update: if isOffice()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']);
+      allow delete: if isAdmin();
+    }
   }
 }

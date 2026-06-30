@@ -7,7 +7,8 @@ import { createRtm, updateRtm } from "@/lib/db";
 import { fileToCompressedDataUrl } from "@/lib/image";
 import { parseSocial } from "@/lib/social";
 import { monthKeyOf } from "@/lib/scores";
-import type { MediaType, Rtm } from "@/types";
+import { CONTENT_TYPES } from "@/data/contentTypes";
+import type { ContentType, MediaType, Rtm } from "@/types";
 import {
   Button,
   Card,
@@ -44,6 +45,7 @@ export function SubmitRtmPage() {
   const [name, setName] = useState(existing?.name ?? "");
   const [clientId, setClientId] = useState(existing?.clientId ?? "");
   const [ideaOwnerIds, setIdeaOwnerIds] = useState<string[]>(existing?.ideaOwnerIds ?? []);
+  const [contentType, setContentType] = useState<ContentType>(existing?.contentType ?? "post");
   const [link, setLink] = useState(existing?.link ?? "");
   const [date, setDate] = useState(existing ? dateToInput(existing) : today());
   const [file, setFile] = useState<File | null>(null);
@@ -57,6 +59,7 @@ export function SubmitRtmPage() {
     setName(existing.name);
     setClientId(existing.clientId);
     setIdeaOwnerIds(existing.ideaOwnerIds);
+    setContentType(existing.contentType ?? "post");
     setLink(existing.link);
     setDate(dateToInput(existing));
     setFile(null);
@@ -110,6 +113,7 @@ export function SubmitRtmPage() {
         mediaType,
         mediaUrl,
         embedUrl,
+        contentType,
         date: new Date(`${date}T12:00:00`),
       };
 
@@ -165,6 +169,33 @@ export function SubmitRtmPage() {
             onChange={(e) => setName(e.target.value)}
             placeholder={t("submit.namePh")}
           />
+        </Field>
+
+        <Field label="סוג התוכן" required hint="קובע כמה נקודות שווה ה‑RTM">
+          <div className="grid grid-cols-3 gap-2">
+            {CONTENT_TYPES.map((ct) => {
+              const active = contentType === ct.id;
+              return (
+                <button
+                  key={ct.id}
+                  type="button"
+                  onClick={() => setContentType(ct.id)}
+                  className={cn(
+                    "flex flex-col items-center gap-1 rounded-2xl border-2 px-2 py-3 text-center transition",
+                    active
+                      ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]"
+                      : "border-[var(--color-line)] hover:border-[var(--color-accent)]",
+                  )}
+                >
+                  <span className="text-2xl">{ct.emoji}</span>
+                  <span className="text-sm font-black">{ct.label}</span>
+                  <span className="rounded-full bg-[var(--color-ink)] px-2 py-0.5 text-[11px] font-black text-white">
+                    {settings.typePoints[ct.id]} נק׳
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </Field>
 
         <div className="grid gap-5 sm:grid-cols-2">

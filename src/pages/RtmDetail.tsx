@@ -14,6 +14,11 @@ import {
   resolveAppeal,
 } from "@/lib/db";
 import type { ClaimCategory } from "@/types";
+import {
+  CONTENT_TYPE_EMOJI,
+  CONTENT_TYPE_LABEL,
+  DEFAULT_CONTENT_TYPE,
+} from "@/data/contentTypes";
 import { Badge, Button, Card, cn, inputClass } from "@/components/ui";
 import { MediaPreview } from "@/components/MediaPreview";
 import { LikeButton } from "@/components/LikeButton";
@@ -31,7 +36,7 @@ export function RtmDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { appUser } = useAuth();
-  const { rtms, employeeName } = useAppData();
+  const { rtms, employeeName, settings } = useAppData();
   const rtm = rtms.find((r) => r.id === id);
 
   const [claimOpen, setClaimOpen] = useState(false);
@@ -58,6 +63,7 @@ export function RtmDetailPage() {
   const dq = rtm.status === "disqualified";
   const pending = rtm.appealStatus === "pending";
   const likes = rtm.reactions ? Object.keys(rtm.reactions).length : 0;
+  const ct = rtm.contentType ?? DEFAULT_CONTENT_TYPE;
 
   const submitClaim = async () => {
     if (!claimText.trim() || !appUser) return;
@@ -170,6 +176,11 @@ export function RtmDetailPage() {
           </Link>
         </Row>
         <Row label="תאריך">{fmtDate(rtm.date?.toDate?.())}</Row>
+        <Row label="סוג">
+          <Badge tone="gold">
+            {CONTENT_TYPE_EMOJI[ct]} {CONTENT_TYPE_LABEL[ct]} · {settings.typePoints[ct]} נק׳
+          </Badge>
+        </Row>
         <Row label="הועלה ע״י">
           {rtm.createdByEmployeeId ? (
             <Link

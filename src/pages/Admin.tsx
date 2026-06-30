@@ -25,6 +25,7 @@ import {
 } from "@/lib/db";
 import type { AppSettings, AppUser, Claim, DigestFrequency } from "@/types";
 import { DEFAULT_RULES_MD } from "@/data/content";
+import { CONTENT_TYPES } from "@/data/contentTypes";
 import {
   Badge,
   Button,
@@ -875,6 +876,37 @@ function SettingsTab() {
             }))
           }
         />
+      </Field>
+
+      <Field
+        label="ניקוד לפי סוג תוכן"
+        hint="כמה נקודות שווה כל סוג RTM (נצבר לבעלי הרעיון)."
+      >
+        <div className="grid grid-cols-3 gap-3">
+          {CONTENT_TYPES.map((ct) => (
+            <label key={ct.id} className="flex flex-col items-center gap-1">
+              <span className="text-sm font-bold">
+                {ct.emoji} {ct.label}
+              </span>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                className={cn(inputClass, "max-w-[6rem] text-center")}
+                value={settings.typePoints[ct.id]}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    typePoints: {
+                      ...s.typePoints,
+                      [ct.id]: Math.max(0, Math.min(20, Number(e.target.value) || 0)),
+                    },
+                  }))
+                }
+              />
+            </label>
+          ))}
+        </div>
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">

@@ -24,12 +24,19 @@ export function DashboardPage() {
   const [monthKey, setMonthKey] = useState(currentMonthKey());
 
   const scores = useMemo(
-    () => computeMonthScores(rtms, monthKey, employees, clients),
-    [rtms, monthKey, employees, clients],
+    () => computeMonthScores(rtms, monthKey, employees, clients, settings.typePoints),
+    [rtms, monthKey, employees, clients, settings.typePoints],
   );
   const prev = useMemo(
-    () => computeMonthScores(rtms, prevMonthKey(monthKey), employees, clients),
-    [rtms, monthKey, employees, clients],
+    () =>
+      computeMonthScores(
+        rtms,
+        prevMonthKey(monthKey),
+        employees,
+        clients,
+        settings.typePoints,
+      ),
+    [rtms, monthKey, employees, clients, settings.typePoints],
   );
 
   const monthRtms = useMemo(

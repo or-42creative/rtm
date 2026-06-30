@@ -2,9 +2,18 @@ import type {
   Rtm,
   Employee,
   Client,
+  ContentType,
   ScoreRow,
   MonthWinners,
 } from "@/types";
+import { DEFAULT_CONTENT_TYPE } from "@/data/contentTypes";
+
+/** Fallback when no settings are supplied (matches DEFAULT_SETTINGS). */
+const DEFAULT_TYPE_POINTS: Record<ContentType, number> = {
+  comment: 1,
+  post: 2,
+  video: 3,
+};
 
 const HE_MONTHS = [
   "ינואר",
@@ -117,7 +126,7 @@ const sortRows = (rows: ScoreRow[]): ScoreRow[] =>
 export interface MonthScores {
   monthKey: string;
   rtmCount: number;
-  /** Points for bringing ideas (one per idea-owner appearance). */
+  /** Points for bringing ideas — each RTM is worth its content-type points. */
   ideaScores: ScoreRow[];
   /** RTMs per account manager. */
   amScores: ScoreRow[];
@@ -143,7 +152,10 @@ export function computeMonthScores(
   monthKey: string,
   employees: Employee[],
   clients: Client[],
+  typePoints: Record<ContentType, number> = DEFAULT_TYPE_POINTS,
 ): MonthScores {
+  const pointsOf = (r: Rtm): number =>
+    typePoints[r.contentType ?? DEFAULT_CONTENT_TYPE] ?? 1;
   const nameOf = new Map(employees.map((e) => [e.id, e.name] as const));
   const clientName = new Map(clients.map((c) => [c.id, c.name] as const));
   const isAccountManager = new Set(clients.map((c) => c.accountManagerId));
@@ -161,16 +173,19 @@ export function computeMonthScores(
     m.set(id, (m.get(id) ?? 0) + by);
 
   for (const r of rtms) {
+    const p = pointsOf(r);
     const owners = new Set(r.ideaOwnerIds.filter(Boolean));
     for (const ownerId of owners) {
-      bump(idea, ownerId);
-      bump(total, ownerId);
+      bump(idea, ownerId, p);
+      bump(total, ownerId, p);
     }
     if (r.accountManagerId) {
+      // The account-manager leaderboard ranks by number of RTMs (the confirmed
+      // winner rule), so it always counts +1 regardless of type.
       bump(am, r.accountManagerId);
-      // Only add an account-manager point if they didn't already earn one as
-      // an idea owner on this same RTM.
-      if (!owners.has(r.accountManagerId)) bump(total, r.accountManagerId);
+      // Only add account-manager points if they didn't already earn them as an
+      // idea owner on this same RTM.
+      if (!owners.has(r.accountManagerId)) bump(total, r.accountManagerId, p);
     }
     if (r.clientId) bump(clientCount, r.clientId);
   }

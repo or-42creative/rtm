@@ -18,6 +18,9 @@ export interface Client {
 
 export type MediaType = "image" | "video" | "embed" | "none";
 
+/** What kind of RTM it is — each type is worth a configurable number of points. */
+export type ContentType = "comment" | "post" | "video";
+
 export interface Rtm {
   id: string;
   name: string;
@@ -37,6 +40,8 @@ export interface Rtm {
   embedUrl?: string | null;
   /** The date the RTM went live. */
   date: Timestamp;
+  /** Post type (comment/post/video) — drives how many points it's worth. */
+  contentType?: ContentType;
   /** "YYYY-MM" derived from `date`, for fast monthly grouping. */
   monthKey: string;
   createdByUid: string;
@@ -131,6 +136,8 @@ export interface AppSettings {
   content: AppContent;
   /** Max idea owners allowed per RTM (admin-configurable; default 2). */
   maxIdeaOwners: number;
+  /** Points each content type is worth (comment/post/video). */
+  typePoints: Record<ContentType, number>;
   /** "Wall of fame" collage size: columns (width) × rows (length). */
   collageCols: number;
   collageRows: number;

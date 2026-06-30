@@ -33,6 +33,7 @@ import type {
   ClaimCategory,
   ClaimResolution,
   Client,
+  ContentType,
   Employee,
   MediaType,
   NotificationType,
@@ -58,6 +59,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   emailDigest: { enabled: false, frequency: "monthly", recipients: [] },
   content: DEFAULT_CONTENT,
   maxIdeaOwners: 2,
+  typePoints: { comment: 1, post: 2, video: 3 },
   collageCols: 4,
   collageRows: 4,
 };
@@ -94,6 +96,7 @@ export const subscribeSettings = (cb: (s: AppSettings) => void) =>
       emailDigest: { ...DEFAULT_SETTINGS.emailDigest, ...data.emailDigest },
       content: { ...DEFAULT_CONTENT, ...data.content },
       maxIdeaOwners: data.maxIdeaOwners ?? DEFAULT_SETTINGS.maxIdeaOwners,
+      typePoints: { ...DEFAULT_SETTINGS.typePoints, ...data.typePoints },
       collageCols: data.collageCols ?? DEFAULT_SETTINGS.collageCols,
       collageRows: data.collageRows ?? DEFAULT_SETTINGS.collageRows,
     });
@@ -160,6 +163,7 @@ export interface NewRtmInput {
   mediaType: MediaType;
   mediaUrl?: string | null;
   embedUrl?: string | null;
+  contentType: ContentType;
   date: Date;
   createdByUid: string;
   createdByEmployeeId?: string | null;

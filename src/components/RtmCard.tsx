@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useAppData } from "@/lib/appData";
 import type { Rtm } from "@/types";
+import { TYPE_POINTS_FROM } from "@/lib/scores";
 import { CONTENT_TYPE_EMOJI, CONTENT_TYPE_LABEL, DEFAULT_CONTENT_TYPE } from "@/data/contentTypes";
 import { MediaPreview } from "./MediaPreview";
 import { Badge, Card, cn } from "./ui";
@@ -22,6 +23,7 @@ export function RtmCard({ rtm, showUploader }: { rtm: Rtm; showUploader?: boolea
   const dq = rtm.status === "disqualified";
   const likes = rtm.reactions ? Object.keys(rtm.reactions).length : 0;
   const ct = rtm.contentType ?? DEFAULT_CONTENT_TYPE;
+  const showType = rtm.monthKey >= TYPE_POINTS_FROM && !!rtm.contentType;
 
   return (
     <div
@@ -45,9 +47,11 @@ export function RtmCard({ rtm, showUploader }: { rtm: Rtm; showUploader?: boolea
             <h3 className="font-black leading-tight">{rtm.name}</h3>
             <div className="flex shrink-0 flex-col items-end gap-1">
               <span className="text-xs font-bold text-[var(--color-ink-soft)]">{fmtDate(rtm)}</span>
-              <span className="rounded-full bg-[var(--color-cloud)] px-2 py-0.5 text-[11px] font-bold">
-                {CONTENT_TYPE_EMOJI[ct]} {CONTENT_TYPE_LABEL[ct]}
-              </span>
+              {showType && (
+                <span className="rounded-full bg-[var(--color-cloud)] px-2 py-0.5 text-[11px] font-bold">
+                  {CONTENT_TYPE_EMOJI[ct]} {CONTENT_TYPE_LABEL[ct]}
+                </span>
+              )}
             </div>
           </div>
           <div className="text-sm text-[var(--color-ink-soft)]">

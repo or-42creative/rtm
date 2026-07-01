@@ -136,7 +136,7 @@ export function DashboardPage() {
       {/* Current standings */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Leaderboard title={t("dash.ideaBoard")} unit="נק׳" rows={scores.ideaScores} empty={t("dash.boardEmpty")} />
-        <Leaderboard title={t("dash.amBoard")} unit="RTM" rows={scores.amScores} empty={t("dash.boardEmpty")} />
+        <Leaderboard title={t("dash.amBoard")} unit="נק׳" rows={scores.amScores} empty={t("dash.boardEmpty")} />
       </div>
 
       {/* Collage */}

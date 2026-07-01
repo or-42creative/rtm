@@ -14,11 +14,8 @@ import {
   resolveAppeal,
 } from "@/lib/db";
 import type { ClaimCategory } from "@/types";
-import {
-  CONTENT_TYPE_EMOJI,
-  CONTENT_TYPE_LABEL,
-  DEFAULT_CONTENT_TYPE,
-} from "@/data/contentTypes";
+import { rtmPoints, TYPE_POINTS_FROM } from "@/lib/scores";
+import { CONTENT_TYPE_EMOJI, CONTENT_TYPE_LABEL, DEFAULT_CONTENT_TYPE } from "@/data/contentTypes";
 import { Badge, Button, Card, cn, inputClass } from "@/components/ui";
 import { MediaPreview } from "@/components/MediaPreview";
 import { LikeButton } from "@/components/LikeButton";
@@ -64,6 +61,8 @@ export function RtmDetailPage() {
   const pending = rtm.appealStatus === "pending";
   const likes = rtm.reactions ? Object.keys(rtm.reactions).length : 0;
   const ct = rtm.contentType ?? DEFAULT_CONTENT_TYPE;
+  const legacyType = rtm.monthKey < TYPE_POINTS_FROM || !rtm.contentType;
+  const pts = rtmPoints(rtm, settings.typePoints);
 
   const submitClaim = async () => {
     if (!claimText.trim() || !appUser) return;
@@ -177,9 +176,13 @@ export function RtmDetailPage() {
         </Row>
         <Row label="תאריך">{fmtDate(rtm.date?.toDate?.())}</Row>
         <Row label="סוג">
-          <Badge tone="gold">
-            {CONTENT_TYPE_EMOJI[ct]} {CONTENT_TYPE_LABEL[ct]} · {settings.typePoints[ct]} נק׳
-          </Badge>
+          {legacyType ? (
+            <Badge tone="neutral">תוכן · {pts} נק׳</Badge>
+          ) : (
+            <Badge tone="gold">
+              {CONTENT_TYPE_EMOJI[ct]} {CONTENT_TYPE_LABEL[ct]} · {pts} נק׳
+            </Badge>
+          )}
         </Row>
         <Row label="הועלה ע״י">
           {rtm.createdByEmployeeId ? (

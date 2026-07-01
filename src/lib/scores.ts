@@ -15,6 +15,24 @@ const DEFAULT_TYPE_POINTS: Record<ContentType, number> = {
   video: 3,
 };
 
+/** Type-based points start this month (inclusive). Anything earlier is legacy,
+ *  unclassified content and is worth a flat 1 point each (the "old" scoring). */
+export const TYPE_POINTS_FROM = "2026-07";
+
+/**
+ * How many points a single RTM is worth to each person credited on it (idea
+ * owner or account manager alike). From July 2026 this is the content-type
+ * value (comment/post/video); before that, every RTM is a flat 1 point because
+ * older content was never classified.
+ */
+export function rtmPoints(
+  r: Rtm,
+  typePoints: Record<ContentType, number> = DEFAULT_TYPE_POINTS,
+): number {
+  if (r.monthKey < TYPE_POINTS_FROM) return 1;
+  return typePoints[r.contentType ?? DEFAULT_CONTENT_TYPE] ?? 1;
+}
+
 const HE_MONTHS = [
   "ינואר",
   "פברואר",
@@ -154,8 +172,7 @@ export function computeMonthScores(
   clients: Client[],
   typePoints: Record<ContentType, number> = DEFAULT_TYPE_POINTS,
 ): MonthScores {
-  const pointsOf = (r: Rtm): number =>
-    typePoints[r.contentType ?? DEFAULT_CONTENT_TYPE] ?? 1;
+  const pointsOf = (r: Rtm): number => rtmPoints(r, typePoints);
   const nameOf = new Map(employees.map((e) => [e.id, e.name] as const));
   const clientName = new Map(clients.map((c) => [c.id, c.name] as const));
   const isAccountManager = new Set(clients.map((c) => c.accountManagerId));
@@ -180,11 +197,10 @@ export function computeMonthScores(
       bump(total, ownerId, p);
     }
     if (r.accountManagerId) {
-      // The account-manager leaderboard ranks by number of RTMs (the confirmed
-      // winner rule), so it always counts +1 regardless of type.
-      bump(am, r.accountManagerId);
-      // Only add account-manager points if they didn't already earn them as an
-      // idea owner on this same RTM.
+      // Account managers earn the same content points as idea owners.
+      bump(am, r.accountManagerId, p);
+      // Only add account-manager points to the combined total if they didn't
+      // already earn them as an idea owner on this same RTM (no double).
       if (!owners.has(r.accountManagerId)) bump(total, r.accountManagerId, p);
     }
     if (r.clientId) bump(clientCount, r.clientId);

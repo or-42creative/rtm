@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { useAppData } from "@/lib/appData";
+import { rtmPoints } from "@/lib/scores";
 import { Avatar, Badge, Button, Card } from "@/components/ui";
 import { RtmCard } from "@/components/RtmCard";
 import {
@@ -14,7 +15,7 @@ import {
 export function EmployeeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { employees, clients, rtms } = useAppData();
+  const { employees, clients, rtms, settings } = useAppData();
   const emp = employees.find((e) => e.id === id);
   const [filter, setFilter] = useState<RtmFilter>(defaultRtmFilter);
 
@@ -43,12 +44,12 @@ export function EmployeeDetailPage() {
   }
 
   const isAM = clients.some((c) => c.accountManagerId === emp.id);
-  const ideaPoints = credited.filter(
-    (r) => r.ideaOwnerIds.includes(emp.id) && r.status !== "disqualified",
-  ).length;
-  const amCount = credited.filter(
-    (r) => r.accountManagerId === emp.id && r.status !== "disqualified",
-  ).length;
+  const ideaPoints = credited
+    .filter((r) => r.ideaOwnerIds.includes(emp.id) && r.status !== "disqualified")
+    .reduce((sum, r) => sum + rtmPoints(r, settings.typePoints), 0);
+  const amPoints = credited
+    .filter((r) => r.accountManagerId === emp.id && r.status !== "disqualified")
+    .reduce((sum, r) => sum + rtmPoints(r, settings.typePoints), 0);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -69,7 +70,7 @@ export function EmployeeDetailPage() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="💡 נקודות רעיון" value={ideaPoints} />
-        {isAM && <Stat label="🎯 RTM ללקוחות" value={amCount} />}
+        {isAM && <Stat label="🎯 נקודות ניהול" value={amPoints} />}
         <Stat label="סה״כ RTMים" value={credited.length} />
       </div>
 

@@ -37,7 +37,7 @@ export const DEFAULT_STRINGS: Record<string, string> = {
   "dash.winnerIdea": "מלך/ת הרעיונות 👑",
   "dash.winnerIdeaSub": "הכי הרבה נקודות רעיון",
   "dash.winnerAm": "מנהל/ת הלקוח של החודש ⭐",
-  "dash.winnerAmSub": "הכי הרבה RTM ללקוחות",
+  "dash.winnerAmSub": "הכי הרבה נקודות ניהול לקוחות",
   "dash.winnersEmpty": "אין עדיין זוכים לחודש הקודם",
 
   // הוספת RTM
